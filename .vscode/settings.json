@@ -1,0 +1,6 @@
+{
+	"java.configuration.updateBuildConfiguration": "interactive",
+	"editor.tabSize": 4,
+	"editor.insertSpaces": false,
+	"java.debug.settings.onBuildFailureProceed": true,
+}

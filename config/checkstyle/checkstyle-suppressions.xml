@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<!--
+    Minimal suppressions for simplified Checkstyle rules.
+    Only suppress intentional patterns, not general categories.
+-->
+<suppressions>
+    <!-- Generated and build directories -->
+    <suppress files="[\\/]generated[\\/]" checks=".*"/>
+    <suppress files="[\\/]build[\\/]" checks=".*"/>
+    
+    <!-- Test and benchmark code - no Javadoc required -->
+    <suppress files="[\\/]test[\\/]" checks="MissingJavadocType"/>
+    <suppress files="[\\/]test[\\/]" checks="MissingJavadocMethod"/>
+    <suppress files="[\\/]test[\\/]" checks="AvoidStarImport"/>
+    <suppress files="[\\/]benchmarks[\\/]" checks="MissingJavadocType"/>
+    <suppress files="[\\/]benchmarks[\\/]" checks="MissingJavadocMethod"/>
+    <suppress files="[\\/]benchmarks[\\/]" checks="AvoidStarImport"/>
+    
+    <!-- Code generator uses javapoet.* and schema.* imports -->
+    <suppress files="StubGenerator\.java$" checks="AvoidStarImport"/>
+    <suppress files="StubGenerator\.java$" checks="MissingJavadocMethod"/>
+    <suppress files="StubGenerator\.java$" checks="NeedBraces"/>
+    <suppress files="SchemaResolver\.java$" checks="AvoidStarImport"/>
+    <suppress files="SchemaResolver\.java$" checks="MissingJavadocType"/>
+    <suppress files="SchemaResolver\.java$" checks="MissingJavadocMethod"/>
+    
+    <!-- Runtime uses Layouts.* for memory layout constants -->
+    <suppress files="MessageHeader\.java$" checks="AvoidStarImport"/>
+    
+    <!-- Internal types - self-documenting records don't need Javadoc -->
+    <suppress files="Resolved.*\.java$" checks="MissingJavadocType"/>
+    <suppress files="Resolved.*\.java$" checks="MissingJavadocMethod"/>
+    <suppress files="LockFile.*\.java$" checks="MissingJavadocType"/>
+    <suppress files="LockFile.*\.java$" checks="MissingJavadocMethod"/>
+    <suppress files="ResolutionResult\.java$" checks="MissingJavadocType"/>
+    <suppress files="SchemaParser\.java$" checks="MissingJavadocType"/>
+    <suppress files="SchemaParser\.java$" checks="MissingJavadocMethod"/>
+    <suppress files="MyraCodegenCli\.java$" checks="MissingJavadocType"/>
+    <suppress files="MyraCodegenCli\.java$" checks="MissingJavadocMethod"/>
+    <suppress files="MyraCodec\.java$" checks="MissingJavadocType"/>
+    
+    <!-- Schema model types - self-documenting records -->
+    <suppress files="MessageDefinition\.java$" checks="MissingJavadocType"/>
+    <suppress files="SchemaDefinition\.java$" checks="MissingJavadocType"/>
+    <suppress files="FieldDefinition\.java$" checks="MissingJavadocType"/>
+    <suppress files="EnumDefinition\.java$" checks="MissingJavadocType"/>
+    <suppress files="EnumValueDefinition\.java$" checks="MissingJavadocType"/>
+    
+    <!-- Runtime internals -->
+    <suppress files="MessageHeader\.java$" checks="MissingJavadocMethod"/>
+    <suppress files="PooledSegment\.java$" checks="MissingJavadocMethod"/>
+    <suppress files="MessageEncoder\.java$" checks="MissingJavadocMethod"/>
+</suppressions>

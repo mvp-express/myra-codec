@@ -1,0 +1,62 @@
+# --------------------------------------------------------------------
+# MyraCodec Lock File
+#
+# WARNING: This file is auto-generated and managed by the MyraCodec
+# codegen tool. Do not edit it manually unless resolving a merge conflict.
+# Commit this file to your version control system.
+# --------------------------------------------------------------------
+
+# Basic metadata about the schema this lock file corresponds to.
+schemaInfo:
+  sourceFile: "kvstore.myra.yml"
+  # This version is incremented by the tool on every change.
+  version: 3
+
+# The unique identifier for the service this lock file belongs to.
+serviceIdentifier:
+  namespace: "com.example.kvstore.rpc"
+  name: "KeyValueStore"
+
+# A map of all message names to their assigned IDs and fields.
+# This is the core of the binary contract.
+messages:
+  PutRequest:
+    id: 101
+    fields:
+      key: 1
+      value: 2
+  PutResponse:
+    id: 102
+    fields:
+      status: 1
+  GetRequest:
+    id: 201
+    fields:
+      key: 1
+  GetResponse:
+    id: 202
+    fields:
+      status: 1
+      value: 2
+  DeleteRequest:
+    id: 301
+    fields:
+      key: 1
+
+# A map of all enum names to their assigned value IDs.
+enums:
+  StatusCode:
+    values:
+      OK: 0
+      NOT_FOUND: 1
+      ERROR: 2
+
+# A critical section for tracking IDs that have been deleted and
+# can no longer be used, ensuring backward compatibility.
+reservedIds:
+  messages:
+    # Hypothetical: A message named "UpdateRequest" with ID 103 was deleted in a previous version.
+    - 103
+  fields:
+    # Hypothetical: A field with ID 3 was deleted from GetResponse in a previous version.
+    GetResponse: [3]

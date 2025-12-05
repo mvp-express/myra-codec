@@ -1,0 +1,35 @@
+namespace express.mvp.myra.codec.bench.codecs.flatbuffers;
+
+table Level {
+  priceNanos:long;
+  size:int;
+  orderCount:int;
+  maker:byte = -1; // -1 represents null, 0=false, 1=true
+}
+
+table Trade {
+  priceNanos:long;
+  size:int;
+  aggressor:string;
+}
+
+table MetadataEntry {
+  key:string;
+  value:string;
+}
+
+table OrderBookSnapshot {
+  timestamp:string;
+  venue:string;
+  symbol:string;
+  instrumentId:int;
+  sequence:long;
+  isTrading:bool;
+  tradingStatus:string;
+  lastTrade:Trade;
+  bids:[Level];
+  asks:[Level];
+  metadata:[MetadataEntry];
+}
+
+root_type OrderBookSnapshot;

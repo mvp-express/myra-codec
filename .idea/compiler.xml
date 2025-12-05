@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <bytecodeTargetLevel target="25" />
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="roray-myra-codec.lib" options="-parameters" />
+      <module name="roray-myra-codec.lib.main" options="-parameters" />
+      <module name="roray-myra-codec.lib.test" options="-parameters" />
+    </option>
+  </component>
+</project>

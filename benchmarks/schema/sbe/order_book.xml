@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<messageSchema xmlns="http://fixprotocol.io/2016/sbe"
+    package="express.mvp.myra.codec.bench.codecs.sbe.generated"
+    id="1"
+    version="1"
+    semanticVersion="1.0.0"
+    description="Order book snapshot schema used by the benchmark harness">
+
+    <types>
+        <composite name="messageHeader" description="Standard SBE message header">
+            <type name="blockLength" primitiveType="uint16"/>
+            <type name="templateId" primitiveType="uint16"/>
+            <type name="schemaId" primitiveType="uint16"/>
+            <type name="version" primitiveType="uint16"/>
+        </composite>
+
+        <composite name="groupSizeEncoding" description="Group size encoding">
+            <type name="blockLength" primitiveType="uint16"/>
+            <type name="numInGroup" primitiveType="uint16"/>
+        </composite>
+
+        <composite name="VarStringEncoding" description="Variable length UTF-8 string">
+            <type name="length" primitiveType="uint16"/>
+            <type name="varData" primitiveType="char"/>
+        </composite>
+
+        <enum name="BooleanType" encodingType="uint8">
+            <validValue name="FALSE">0</validValue>
+            <validValue name="TRUE">1</validValue>
+        </enum>
+
+        <enum name="NullableBooleanType" encodingType="int8">
+            <validValue name="NULL_VALUE">-1</validValue>
+            <validValue name="FALSE">0</validValue>
+            <validValue name="TRUE">1</validValue>
+        </enum>
+    </types>
+
+    <message name="OrderBookSnapshot" id="4001" blockLength="28" semanticVersion="1.0.0">
+        <field name="instrumentId" id="1" type="int32"/>
+        <field name="sequence" id="2" type="int64"/>
+        <field name="isTrading" id="3" type="BooleanType"/>
+        <field name="hasTradingStatus" id="4" type="BooleanType"/>
+        <field name="hasLastTrade" id="5" type="BooleanType"/>
+        <field name="lastTradePrice" id="6" type="int64" presence="optional"/>
+        <field name="lastTradeSize" id="7" type="int32" presence="optional"/>
+        <field name="hasLastTradeAggressor" id="8" type="BooleanType"/>
+
+        <group name="bids" id="20" dimensionType="groupSizeEncoding">
+            <field name="priceNanos" id="1" type="int64"/>
+            <field name="size" id="2" type="int32"/>
+            <field name="orderCount" id="3" type="int32"/>
+            <field name="maker" id="4" type="NullableBooleanType"/>
+        </group>
+
+        <group name="asks" id="30" dimensionType="groupSizeEncoding">
+            <field name="priceNanos" id="1" type="int64"/>
+            <field name="size" id="2" type="int32"/>
+            <field name="orderCount" id="3" type="int32"/>
+            <field name="maker" id="4" type="NullableBooleanType"/>
+        </group>
+
+        <group name="metadata" id="40" dimensionType="groupSizeEncoding">
+            <data name="key" id="1" type="VarStringEncoding"/>
+            <data name="value" id="2" type="VarStringEncoding"/>
+        </group>
+
+        <data name="timestamp" id="10" type="VarStringEncoding"/>
+        <data name="venue" id="11" type="VarStringEncoding"/>
+        <data name="symbol" id="12" type="VarStringEncoding"/>
+        <data name="tradingStatus" id="13" type="VarStringEncoding"/>
+        <data name="lastTradeAggressor" id="14" type="VarStringEncoding"/>
+    </message>
+</messageSchema>
