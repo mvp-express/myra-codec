@@ -1,0 +1,9 @@
+namespace: "express.mvp.examples.echo"
+version: "1.0.0"
+
+messages:
+  - name: "Message"
+    fields:
+      - tag: 1
+        name: "text"
+        type: "string"

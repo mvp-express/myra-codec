@@ -276,11 +276,9 @@ class SchemaResolverTest {
     }
 
         @Test
-        void resolve_WithNullEnums_ShouldHandleMissingEnums() {
-                SchemaDefinition schema =
-                                new SchemaDefinition("com.test", "1.0.0", List.of(), null);
+        void resolve_WithEmptyEnums_ShouldHandleMissingEnums() {
+                SchemaDefinition schema = new SchemaDefinition("com.test", "1.0.0", List.of(), List.of());
 
-                // Should not throw NPE when enums() is null; should produce an empty resolved enum list
                 ResolutionResult result =
                                 SchemaResolver.resolve(schema, null, tempDir.resolve("test.myra.yml"));
 
