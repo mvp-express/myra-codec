@@ -52,6 +52,7 @@ class MyraCodegenCliRoundTripTest {
         Path compiledOutput = compileGeneratedSources(generatedSources);
         short templateId = templateId(lockFile, "PutRequest");
         short schemaVersion = schemaVersion(lockFile);
+        assertEquals("com.example.kvstore.codec", lockFile.schemaInfo.get("namespace"));
 
         MemorySegmentPool pool = new MemorySegmentPool(4096, 1, 8);
         MessageEncoder encoder = new MessageEncoder(pool);
