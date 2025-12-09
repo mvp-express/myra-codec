@@ -171,7 +171,12 @@ public final class SchemaResolver {
     }
 
     private void resolveEnums() {
-        for (EnumDefinition rawEnum : rawSchema.enums()) {
+        List<EnumDefinition> enums = rawSchema.enums();
+        if (enums == null || enums.isEmpty()) {
+            return;
+        }
+
+        for (EnumDefinition rawEnum : enums) {
             resolvedEnums.add(ResolvedEnumDefinition.fromRaw(rawEnum));
 
             Map<String, Integer> valuesLock =
