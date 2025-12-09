@@ -52,9 +52,24 @@ public class MyraCodegenCli implements Callable<Integer> {
             SchemaParser parser = new SchemaParser();
             SchemaDefinition rawSchema = parser.parse(schemaFile.toPath());
 
-            // 3. Resolve the schema, assigning stable IDs.
+                // 3. Resolve the schema, assigning stable IDs.
             System.out.println("Step 3: Resolving schema and assigning IDs...");
-            ResolutionResult result =
+                // If we loaded a lockfile, fail fast with a friendly error if the namespace doesn't match
+                if (existingLockFile != null && existingLockFile.schemaInfo != null) {
+                Object ns = existingLockFile.schemaInfo.get("namespace");
+                if (ns instanceof String && !ns.equals(rawSchema.namespace())) {
+                    System.err.println(
+                            "ERROR: lockfile namespace '"
+                                    + ns
+                                    + "' does not match schema namespace '"
+                                    + rawSchema.namespace()
+                                    + "' — aborting to avoid applying the lock to a different schema.\n");
+                    System.err.println("Delete or regenerate the lockfile if you intentionally changed schema namespace.");
+                    return 2;
+                }
+                }
+
+                ResolutionResult result =
                     SchemaResolver.resolve(rawSchema, existingLockFile, schemaFile.toPath());
 
             // 4. Generate the Java source files.

@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -124,6 +125,26 @@ class MyraCodegenCliRoundTripTest {
             }
         }
     }
+
+        @Test
+        void cliFailsFastWhenLockNamespaceMismatches(@TempDir Path tempDir) throws Exception {
+                Path schemaPath = Path.of("src", "test", "resources", "kvstore.myra.yml").toAbsolutePath();
+                Path generatedSources = Files.createDirectories(tempDir.resolve("generated-src"));
+                Path lockFilePath = tempDir.resolve("kvstore.mismatch.lock");
+
+                LockFile wrong = LockFile.empty();
+                wrong.schemaInfo = Map.of("namespace", "com.example.other", "version", "1.0.0", "sourceFile", "kvstore.myra.yml");
+                LockFileManager.save(wrong, lockFilePath);
+
+                int exitCode =
+                                new CommandLine(new MyraCodegenCli())
+                                                .execute(
+                                                                "-s", schemaPath.toString(),
+                                                                "-o", generatedSources.toString(),
+                                                                "-l", lockFilePath.toString());
+
+                assertEquals(2, exitCode, "CLI should fail fast with namespace mismatch and return exit code 2");
+        }
 
     private static Path compileGeneratedSources(Path outputDir) throws IOException {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
