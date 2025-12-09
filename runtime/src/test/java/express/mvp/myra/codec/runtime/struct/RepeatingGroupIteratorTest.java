@@ -8,9 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-/**
- * Tests for RepeatingGroupIterator - fixed-size primitive element iteration.
- */
+/** Tests for RepeatingGroupIterator - fixed-size primitive element iteration. */
 @DisplayName("RepeatingGroupIterator Tests")
 class RepeatingGroupIteratorTest {
 
@@ -49,7 +47,11 @@ class RepeatingGroupIteratorTest {
             try (Arena arena = Arena.ofConfined()) {
                 MemorySegment segment = arena.allocate(100);
                 // Write count = 5 at offset 0
-                segment.set(java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED.withOrder(java.nio.ByteOrder.BIG_ENDIAN), 0, 5);
+                segment.set(
+                        java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED.withOrder(
+                                java.nio.ByteOrder.BIG_ENDIAN),
+                        0,
+                        5);
 
                 RepeatingGroupIterator iter = new RepeatingGroupIterator(8);
                 iter.wrap(segment, 0);
@@ -64,7 +66,11 @@ class RepeatingGroupIteratorTest {
             try (Arena arena = Arena.ofConfined()) {
                 MemorySegment segment = arena.allocate(100);
                 // Write count = 3 at offset 10
-                segment.set(java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED.withOrder(java.nio.ByteOrder.BIG_ENDIAN), 10, 3);
+                segment.set(
+                        java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED.withOrder(
+                                java.nio.ByteOrder.BIG_ENDIAN),
+                        10,
+                        3);
 
                 RepeatingGroupIterator iter = new RepeatingGroupIterator(4);
                 iter.wrap(segment, 10);
@@ -88,7 +94,11 @@ class RepeatingGroupIteratorTest {
 
             try (Arena arena = Arena.ofConfined()) {
                 MemorySegment segment = arena.allocate(100);
-                segment.set(java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED.withOrder(java.nio.ByteOrder.BIG_ENDIAN), 0, 0);
+                segment.set(
+                        java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED.withOrder(
+                                java.nio.ByteOrder.BIG_ENDIAN),
+                        0,
+                        0);
                 iter.wrap(segment, 0);
                 assertTrue(iter.isWrapped());
 
@@ -107,8 +117,12 @@ class RepeatingGroupIteratorTest {
         void shouldReadLongElementsAtCorrectPositions() {
             try (Arena arena = Arena.ofConfined()) {
                 MemorySegment segment = arena.allocate(100);
-                var intLayout = java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED.withOrder(java.nio.ByteOrder.BIG_ENDIAN);
-                var longLayout = java.lang.foreign.ValueLayout.JAVA_LONG_UNALIGNED.withOrder(java.nio.ByteOrder.BIG_ENDIAN);
+                var intLayout =
+                        java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED.withOrder(
+                                java.nio.ByteOrder.BIG_ENDIAN);
+                var longLayout =
+                        java.lang.foreign.ValueLayout.JAVA_LONG_UNALIGNED.withOrder(
+                                java.nio.ByteOrder.BIG_ENDIAN);
 
                 // Write count = 3
                 segment.set(intLayout, 0, 3);
@@ -132,7 +146,9 @@ class RepeatingGroupIteratorTest {
         void shouldThrowOnOutOfBoundsAccess() {
             try (Arena arena = Arena.ofConfined()) {
                 MemorySegment segment = arena.allocate(100);
-                var intLayout = java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED.withOrder(java.nio.ByteOrder.BIG_ENDIAN);
+                var intLayout =
+                        java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED.withOrder(
+                                java.nio.ByteOrder.BIG_ENDIAN);
 
                 segment.set(intLayout, 0, 2); // count = 2
 
@@ -155,7 +171,9 @@ class RepeatingGroupIteratorTest {
         void shouldReadIntElementsAtCorrectPositions() {
             try (Arena arena = Arena.ofConfined()) {
                 MemorySegment segment = arena.allocate(100);
-                var intLayout = java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED.withOrder(java.nio.ByteOrder.BIG_ENDIAN);
+                var intLayout =
+                        java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED.withOrder(
+                                java.nio.ByteOrder.BIG_ENDIAN);
 
                 // Write count = 4
                 segment.set(intLayout, 0, 4);
@@ -186,7 +204,9 @@ class RepeatingGroupIteratorTest {
         void shouldReadByteElements() {
             try (Arena arena = Arena.ofConfined()) {
                 MemorySegment segment = arena.allocate(100);
-                var intLayout = java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED.withOrder(java.nio.ByteOrder.BIG_ENDIAN);
+                var intLayout =
+                        java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED.withOrder(
+                                java.nio.ByteOrder.BIG_ENDIAN);
 
                 segment.set(intLayout, 0, 3);
                 segment.set(java.lang.foreign.ValueLayout.JAVA_BYTE, 4, (byte) 10);
@@ -207,7 +227,9 @@ class RepeatingGroupIteratorTest {
         void shouldReadBooleanElements() {
             try (Arena arena = Arena.ofConfined()) {
                 MemorySegment segment = arena.allocate(100);
-                var intLayout = java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED.withOrder(java.nio.ByteOrder.BIG_ENDIAN);
+                var intLayout =
+                        java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED.withOrder(
+                                java.nio.ByteOrder.BIG_ENDIAN);
 
                 segment.set(intLayout, 0, 3);
                 segment.set(java.lang.foreign.ValueLayout.JAVA_BOOLEAN, 4, true);
@@ -228,8 +250,12 @@ class RepeatingGroupIteratorTest {
         void shouldReadDoubleElements() {
             try (Arena arena = Arena.ofConfined()) {
                 MemorySegment segment = arena.allocate(100);
-                var intLayout = java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED.withOrder(java.nio.ByteOrder.BIG_ENDIAN);
-                var doubleLayout = java.lang.foreign.ValueLayout.JAVA_DOUBLE_UNALIGNED.withOrder(java.nio.ByteOrder.BIG_ENDIAN);
+                var intLayout =
+                        java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED.withOrder(
+                                java.nio.ByteOrder.BIG_ENDIAN);
+                var doubleLayout =
+                        java.lang.foreign.ValueLayout.JAVA_DOUBLE_UNALIGNED.withOrder(
+                                java.nio.ByteOrder.BIG_ENDIAN);
 
                 segment.set(intLayout, 0, 2);
                 segment.set(doubleLayout, 4, 3.14);
@@ -253,7 +279,9 @@ class RepeatingGroupIteratorTest {
         void shouldCalculateByteSizeCorrectly() {
             try (Arena arena = Arena.ofConfined()) {
                 MemorySegment segment = arena.allocate(100);
-                var intLayout = java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED.withOrder(java.nio.ByteOrder.BIG_ENDIAN);
+                var intLayout =
+                        java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED.withOrder(
+                                java.nio.ByteOrder.BIG_ENDIAN);
 
                 segment.set(intLayout, 0, 5); // count = 5
 
@@ -270,7 +298,9 @@ class RepeatingGroupIteratorTest {
         void shouldCalculateByteSizeForEmptyGroup() {
             try (Arena arena = Arena.ofConfined()) {
                 MemorySegment segment = arena.allocate(100);
-                var intLayout = java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED.withOrder(java.nio.ByteOrder.BIG_ENDIAN);
+                var intLayout =
+                        java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED.withOrder(
+                                java.nio.ByteOrder.BIG_ENDIAN);
 
                 segment.set(intLayout, 0, 0); // count = 0
 
@@ -292,7 +322,9 @@ class RepeatingGroupIteratorTest {
         void shouldReturnCorrectElementOffsets() {
             try (Arena arena = Arena.ofConfined()) {
                 MemorySegment segment = arena.allocate(100);
-                var intLayout = java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED.withOrder(java.nio.ByteOrder.BIG_ENDIAN);
+                var intLayout =
+                        java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED.withOrder(
+                                java.nio.ByteOrder.BIG_ENDIAN);
 
                 segment.set(intLayout, 0, 3);
 

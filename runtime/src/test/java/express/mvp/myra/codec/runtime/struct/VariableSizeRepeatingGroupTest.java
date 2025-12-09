@@ -9,9 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-/**
- * Tests for VariableSizeRepeatingGroupBuilder and VariableSizeRepeatingGroupIterator.
- */
+/** Tests for VariableSizeRepeatingGroupBuilder and VariableSizeRepeatingGroupIterator. */
 @DisplayName("Variable Size Repeating Group Tests")
 class VariableSizeRepeatingGroupTest {
 
@@ -177,10 +175,11 @@ class VariableSizeRepeatingGroupTest {
                 iter.wrap(segment, 0);
 
                 int[] index = {0};
-                iter.forEachString(view -> {
-                    assertEquals(expected[index[0]], view.toString());
-                    index[0]++;
-                });
+                iter.forEachString(
+                        view -> {
+                            assertEquals(expected[index[0]], view.toString());
+                            index[0]++;
+                        });
 
                 assertEquals(3, index[0]);
             }
@@ -241,7 +240,8 @@ class VariableSizeRepeatingGroupTest {
                 MemorySegment segment = arena.allocate(100);
 
                 VariableSizeRepeatingGroupBuilder builder = new VariableSizeRepeatingGroupBuilder();
-                assertThrows(IllegalArgumentException.class,
+                assertThrows(
+                        IllegalArgumentException.class,
                         () -> builder.beginWithCount(segment, 0, -1));
             }
         }

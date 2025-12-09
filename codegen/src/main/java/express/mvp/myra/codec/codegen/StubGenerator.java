@@ -160,17 +160,20 @@ public final class StubGenerator {
                                             field.name() + "Iterator",
                                             Modifier.PRIVATE,
                                             Modifier.FINAL)
-                                    .initializer("new $T($L)", RepeatingGroupIterator.class, elementSize)
+                                    .initializer(
+                                            "new $T($L)", RepeatingGroupIterator.class, elementSize)
                                     .build());
                 } else {
-                    // Variable-size elements (strings, messages, bytes) use VariableSizeRepeatingGroupIterator
+                    // Variable-size elements (strings, messages, bytes) use
+                    // VariableSizeRepeatingGroupIterator
                     viewFields.add(
                             FieldSpec.builder(
                                             VariableSizeRepeatingGroupIterator.class,
                                             field.name() + "Iterator",
                                             Modifier.PRIVATE,
                                             Modifier.FINAL)
-                                    .initializer("new $T()", VariableSizeRepeatingGroupIterator.class)
+                                    .initializer(
+                                            "new $T()", VariableSizeRepeatingGroupIterator.class)
                                     .build());
                     // Also add a flyweight view for nested messages
                     if (isMessageType(field)) {
@@ -229,7 +232,10 @@ public final class StubGenerator {
                                 Modifier.PUBLIC,
                                 Modifier.STATIC,
                                 Modifier.FINAL)
-                        .addJavadoc("Schema version in wire format: " + schemaVersion.toShortString() + "\n")
+                        .addJavadoc(
+                                "Schema version in wire format: "
+                                        + schemaVersion.toShortString()
+                                        + "\n")
                         .initializer("(short) $L", schemaVersion.toWireFormat())
                         .build());
 
@@ -806,8 +812,9 @@ public final class StubGenerator {
                 MethodSpec.methodBuilder("id")
                         .addModifiers(Modifier.PUBLIC)
                         .returns(int.class)
-                        .addJavadoc("Returns the wire-format integer ID for this enum value.\n"
-                                + "@return the numeric ID")
+                        .addJavadoc(
+                                "Returns the wire-format integer ID for this enum value.\n"
+                                        + "@return the numeric ID")
                         .addStatement("return this.id")
                         .build());
 
@@ -829,7 +836,12 @@ public final class StubGenerator {
             // Add static lookup array field
             ArrayTypeName arrayType = ArrayTypeName.of(enumClass);
             enumBuilder.addField(
-                    FieldSpec.builder(arrayType, "VALUES_BY_ID", Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
+                    FieldSpec.builder(
+                                    arrayType,
+                                    "VALUES_BY_ID",
+                                    Modifier.PRIVATE,
+                                    Modifier.STATIC,
+                                    Modifier.FINAL)
                             .build());
 
             // Add static initializer to populate the array
@@ -846,7 +858,8 @@ public final class StubGenerator {
                             .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                             .addParameter(int.class, "id")
                             .returns(enumClass)
-                            .addJavadoc("""
+                            .addJavadoc(
+                                    """
                                     Returns the enum constant for the given wire-format ID.
                                     Uses O(1) array lookup for high-performance decoding.
 
@@ -855,11 +868,15 @@ public final class StubGenerator {
                                     @throws IllegalArgumentException if id is out of range or unknown
                                     """)
                             .beginControlFlow("if (id < 0 || id >= VALUES_BY_ID.length)")
-                            .addStatement("throw new IllegalArgumentException(\"Unknown enum id: \" + id)")
+                            .addStatement(
+                                    "throw new IllegalArgumentException(\"Unknown enum id: \" +"
+                                            + " id)")
                             .endControlFlow()
                             .addStatement("$T result = VALUES_BY_ID[id]", enumClass)
                             .beginControlFlow("if (result == null)")
-                            .addStatement("throw new IllegalArgumentException(\"Unknown enum id: \" + id)")
+                            .addStatement(
+                                    "throw new IllegalArgumentException(\"Unknown enum id: \" +"
+                                            + " id)")
                             .endControlFlow()
                             .addStatement("return result")
                             .build());
@@ -874,7 +891,8 @@ public final class StubGenerator {
                                     AnnotationSpec.builder(SuppressWarnings.class)
                                             .addMember("value", "$S", "unused")
                                             .build())
-                            .addJavadoc("""
+                            .addJavadoc(
+                                    """
                                     Returns the enum constant for the given wire-format ID, or null if unknown.
                                     Uses O(1) array lookup for high-performance decoding.
 
@@ -894,7 +912,8 @@ public final class StubGenerator {
                             .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                             .addParameter(int.class, "id")
                             .returns(enumClass)
-                            .addJavadoc("""
+                            .addJavadoc(
+                                    """
                                     Returns the enum constant for the given wire-format ID.
 
                                     @param id the wire-format integer ID
@@ -906,7 +925,9 @@ public final class StubGenerator {
                             .addStatement("return e")
                             .endControlFlow()
                             .endControlFlow()
-                            .addStatement("throw new IllegalArgumentException(\"Unknown enum id: \" + id)")
+                            .addStatement(
+                                    "throw new IllegalArgumentException(\"Unknown enum id: \" +"
+                                            + " id)")
                             .build());
 
             enumBuilder.addMethod(
@@ -918,7 +939,8 @@ public final class StubGenerator {
                                     AnnotationSpec.builder(SuppressWarnings.class)
                                             .addMember("value", "$S", "unused")
                                             .build())
-                            .addJavadoc("""
+                            .addJavadoc(
+                                    """
                                     Returns the enum constant for the given wire-format ID, or null if unknown.
 
                                     @param id the wire-format integer ID
@@ -1063,11 +1085,9 @@ public final class StubGenerator {
     }
 
     /**
-     * Creates accessor methods for a repeating group field.
-     * Generates:
-     * - getXXXCount(): returns the number of elements
-     * - getXXXAt(int index): returns element at index (for primitives)
-     * - getXXXIterator(): returns the iterator for more complex access
+     * Creates accessor methods for a repeating group field. Generates: - getXXXCount(): returns the
+     * number of elements - getXXXAt(int index): returns element at index (for primitives) -
+     * getXXXIterator(): returns the iterator for more complex access
      */
     private List<MethodSpec> createRepeatingGroupGetters(
             ResolvedFieldDefinition field, String offsetConst) {
@@ -1076,15 +1096,18 @@ public final class StubGenerator {
         String capitalizedName = capitalize(field.name());
 
         // Count getter - wraps the iterator and returns count
-        MethodSpec countGetter = MethodSpec.methodBuilder("get" + capitalizedName + "Count")
-                .addModifiers(Modifier.PUBLIC)
-                .returns(int.class)
-                .addStatement(
-                        "final long dataOffset = this.offset + segment.get($T.INT_BE, this.offset + $L)",
-                        Layouts.class, offsetConst)
-                .addStatement("this.$L.wrap(this.segment, dataOffset)", iteratorFieldName)
-                .addStatement("return this.$L.count()", iteratorFieldName)
-                .build();
+        MethodSpec countGetter =
+                MethodSpec.methodBuilder("get" + capitalizedName + "Count")
+                        .addModifiers(Modifier.PUBLIC)
+                        .returns(int.class)
+                        .addStatement(
+                                "final long dataOffset = this.offset + segment.get($T.INT_BE,"
+                                        + " this.offset + $L)",
+                                Layouts.class,
+                                offsetConst)
+                        .addStatement("this.$L.wrap(this.segment, dataOffset)", iteratorFieldName)
+                        .addStatement("return this.$L.count()", iteratorFieldName)
+                        .build();
         methods.add(countGetter);
 
         if (isRepeatedPrimitiveOrEnum(field)) {
@@ -1092,98 +1115,136 @@ public final class StubGenerator {
             TypeName elementType = getRepeatedElementType(field);
             String getterMethod = getIteratorGetterMethod(field.type());
 
-            MethodSpec elementGetter = MethodSpec.methodBuilder("get" + capitalizedName + "At")
-                    .addModifiers(Modifier.PUBLIC)
-                    .addParameter(int.class, "index")
-                    .returns(elementType)
-                    .addJavadoc("Returns the element at the given index.\n"
-                            + "@param index the element index (0-based)\n"
-                            + "@return the element value\n"
-                            + "@throws IndexOutOfBoundsException if index is out of range")
-                    .addStatement(
-                            "final long dataOffset = this.offset + segment.get($T.INT_BE, this.offset + $L)",
-                            Layouts.class, offsetConst)
-                    .addStatement("this.$L.wrap(this.segment, dataOffset)", iteratorFieldName)
-                    .addStatement("return this.$L.$L(index)", iteratorFieldName, getterMethod)
-                    .build();
+            MethodSpec elementGetter =
+                    MethodSpec.methodBuilder("get" + capitalizedName + "At")
+                            .addModifiers(Modifier.PUBLIC)
+                            .addParameter(int.class, "index")
+                            .returns(elementType)
+                            .addJavadoc(
+                                    "Returns the element at the given index.\n"
+                                            + "@param index the element index (0-based)\n"
+                                            + "@return the element value\n"
+                                            + "@throws IndexOutOfBoundsException if index is out of"
+                                            + " range")
+                            .addStatement(
+                                    "final long dataOffset = this.offset + segment.get($T.INT_BE,"
+                                            + " this.offset + $L)",
+                                    Layouts.class,
+                                    offsetConst)
+                            .addStatement(
+                                    "this.$L.wrap(this.segment, dataOffset)", iteratorFieldName)
+                            .addStatement(
+                                    "return this.$L.$L(index)", iteratorFieldName, getterMethod)
+                            .build();
             methods.add(elementGetter);
 
             // For enums, also generate a method that returns the enum type
             if (isEnum(field.type())) {
                 ClassName enumClass = ClassName.get(schema.namespace(), field.type());
-                MethodSpec enumGetter = MethodSpec.methodBuilder("get" + capitalizedName + "EnumAt")
-                        .addModifiers(Modifier.PUBLIC)
-                        .addParameter(int.class, "index")
-                        .returns(enumClass)
-                        .addJavadoc("Returns the enum element at the given index.\n"
-                                + "@param index the element index (0-based)\n"
-                                + "@return the enum value")
-                        .addStatement(
-                                "final long dataOffset = this.offset + segment.get($T.INT_BE, this.offset + $L)",
-                                Layouts.class, offsetConst)
-                        .addStatement("this.$L.wrap(this.segment, dataOffset)", iteratorFieldName)
-                        .addStatement("int rawValue = (int) this.$L.$L(index)", iteratorFieldName, getterMethod)
-                        .beginControlFlow("for ($T e : $T.values())", enumClass, enumClass)
-                        .beginControlFlow("if (e.id() == rawValue)")
-                        .addStatement("return e")
-                        .endControlFlow()
-                        .endControlFlow()
-                        .addStatement("throw new IllegalArgumentException(\"Unknown enum value: \" + rawValue)")
-                        .build();
+                MethodSpec enumGetter =
+                        MethodSpec.methodBuilder("get" + capitalizedName + "EnumAt")
+                                .addModifiers(Modifier.PUBLIC)
+                                .addParameter(int.class, "index")
+                                .returns(enumClass)
+                                .addJavadoc(
+                                        "Returns the enum element at the given index.\n"
+                                                + "@param index the element index (0-based)\n"
+                                                + "@return the enum value")
+                                .addStatement(
+                                        "final long dataOffset = this.offset +"
+                                                + " segment.get($T.INT_BE, this.offset + $L)",
+                                        Layouts.class,
+                                        offsetConst)
+                                .addStatement(
+                                        "this.$L.wrap(this.segment, dataOffset)", iteratorFieldName)
+                                .addStatement(
+                                        "int rawValue = (int) this.$L.$L(index)",
+                                        iteratorFieldName,
+                                        getterMethod)
+                                .beginControlFlow("for ($T e : $T.values())", enumClass, enumClass)
+                                .beginControlFlow("if (e.id() == rawValue)")
+                                .addStatement("return e")
+                                .endControlFlow()
+                                .endControlFlow()
+                                .addStatement(
+                                        "throw new IllegalArgumentException(\"Unknown enum value:"
+                                                + " \" + rawValue)")
+                                .build();
                 methods.add(enumGetter);
             }
         } else if (isMessageType(field)) {
             // For nested messages: generate method that wraps flyweight at index
-            ClassName childFlyweight = ClassName.get(schema.namespace(), field.type() + flyweightSuffix);
+            ClassName childFlyweight =
+                    ClassName.get(schema.namespace(), field.type() + flyweightSuffix);
             String viewFieldName = field.name() + "View";
 
-            MethodSpec elementGetter = MethodSpec.methodBuilder("get" + capitalizedName + "At")
-                    .addModifiers(Modifier.PUBLIC)
-                    .addParameter(int.class, "index")
-                    .returns(childFlyweight)
-                    .addJavadoc("Returns the nested message at the given index, wrapped in a reusable flyweight.\n"
-                            + "@param index the element index (0-based)\n"
-                            + "@return the flyweight wrapper (reused instance)\n"
-                            + "@throws IndexOutOfBoundsException if index is out of range")
-                    .addStatement(
-                            "final long dataOffset = this.offset + segment.get($T.INT_BE, this.offset + $L)",
-                            Layouts.class, offsetConst)
-                    .addStatement("this.$L.wrap(this.segment, dataOffset)", iteratorFieldName)
-                    .addStatement("return this.$L.wrapElementAt(index, this.$L)",
-                            iteratorFieldName, viewFieldName)
-                    .build();
+            MethodSpec elementGetter =
+                    MethodSpec.methodBuilder("get" + capitalizedName + "At")
+                            .addModifiers(Modifier.PUBLIC)
+                            .addParameter(int.class, "index")
+                            .returns(childFlyweight)
+                            .addJavadoc(
+                                    "Returns the nested message at the given index, wrapped in a"
+                                            + " reusable flyweight.\n"
+                                            + "@param index the element index (0-based)\n"
+                                            + "@return the flyweight wrapper (reused instance)\n"
+                                            + "@throws IndexOutOfBoundsException if index is out of"
+                                            + " range")
+                            .addStatement(
+                                    "final long dataOffset = this.offset + segment.get($T.INT_BE,"
+                                            + " this.offset + $L)",
+                                    Layouts.class,
+                                    offsetConst)
+                            .addStatement(
+                                    "this.$L.wrap(this.segment, dataOffset)", iteratorFieldName)
+                            .addStatement(
+                                    "return this.$L.wrapElementAt(index, this.$L)",
+                                    iteratorFieldName,
+                                    viewFieldName)
+                            .build();
             methods.add(elementGetter);
         } else if (isStringType(field)) {
             // For strings: generate method that fills a Utf8View
-            MethodSpec stringGetter = MethodSpec.methodBuilder("get" + capitalizedName + "At")
-                    .addModifiers(Modifier.PUBLIC)
-                    .addParameter(int.class, "index")
-                    .addParameter(Utf8View.class, "view")
-                    .addJavadoc("Reads the string at the given index into the provided Utf8View.\n"
-                            + "@param index the element index (0-based)\n"
-                            + "@param view the view to wrap around the string data")
-                    .addStatement(
-                            "final long dataOffset = this.offset + segment.get($T.INT_BE, this.offset + $L)",
-                            Layouts.class, offsetConst)
-                    .addStatement("this.$L.wrap(this.segment, dataOffset)", iteratorFieldName)
-                    .addStatement("this.$L.getStringAt(index, view)", iteratorFieldName)
-                    .build();
+            MethodSpec stringGetter =
+                    MethodSpec.methodBuilder("get" + capitalizedName + "At")
+                            .addModifiers(Modifier.PUBLIC)
+                            .addParameter(int.class, "index")
+                            .addParameter(Utf8View.class, "view")
+                            .addJavadoc(
+                                    "Reads the string at the given index into the provided"
+                                            + " Utf8View.\n"
+                                            + "@param index the element index (0-based)\n"
+                                            + "@param view the view to wrap around the string data")
+                            .addStatement(
+                                    "final long dataOffset = this.offset + segment.get($T.INT_BE,"
+                                            + " this.offset + $L)",
+                                    Layouts.class,
+                                    offsetConst)
+                            .addStatement(
+                                    "this.$L.wrap(this.segment, dataOffset)", iteratorFieldName)
+                            .addStatement("this.$L.getStringAt(index, view)", iteratorFieldName)
+                            .build();
             methods.add(stringGetter);
         } else if (isBytesType(field)) {
             // For bytes: generate method that returns a segment slice
-            MethodSpec bytesGetter = MethodSpec.methodBuilder("get" + capitalizedName + "At")
-                    .addModifiers(Modifier.PUBLIC)
-                    .addParameter(int.class, "index")
-                    .returns(MemorySegment.class)
-                    .addJavadoc("Returns a slice of the bytes at the given index.\n"
-                            + "@param index the element index (0-based)\n"
-                            + "@return a MemorySegment slice containing the bytes")
-                    .addStatement(
-                            "final long dataOffset = this.offset + segment.get($T.INT_BE, this.offset + $L)",
-                            Layouts.class, offsetConst)
-                    .addStatement("this.$L.wrap(this.segment, dataOffset)", iteratorFieldName)
-                    .addStatement("return this.$L.getBytesAt(index)", iteratorFieldName)
-                    .build();
+            MethodSpec bytesGetter =
+                    MethodSpec.methodBuilder("get" + capitalizedName + "At")
+                            .addModifiers(Modifier.PUBLIC)
+                            .addParameter(int.class, "index")
+                            .returns(MemorySegment.class)
+                            .addJavadoc(
+                                    "Returns a slice of the bytes at the given index.\n"
+                                            + "@param index the element index (0-based)\n"
+                                            + "@return a MemorySegment slice containing the bytes")
+                            .addStatement(
+                                    "final long dataOffset = this.offset + segment.get($T.INT_BE,"
+                                            + " this.offset + $L)",
+                                    Layouts.class,
+                                    offsetConst)
+                            .addStatement(
+                                    "this.$L.wrap(this.segment, dataOffset)", iteratorFieldName)
+                            .addStatement("return this.$L.getBytesAt(index)", iteratorFieldName)
+                            .build();
             methods.add(bytesGetter);
         }
 
@@ -1253,8 +1314,15 @@ public final class StubGenerator {
         if (field.repeated()) {
             // Generate setter for repeating groups
             return createRepeatingGroupSetter(
-                    builderClassName, field, fieldIndex, varSlot, optionalBitIndex,
-                    layoutsClass, flyweightClass, objectsClass, varFieldWriterClass);
+                    builderClassName,
+                    field,
+                    fieldIndex,
+                    varSlot,
+                    optionalBitIndex,
+                    layoutsClass,
+                    flyweightClass,
+                    objectsClass,
+                    varFieldWriterClass);
         }
 
         String indexConst = constantName(field.name(), "INDEX");
@@ -1407,9 +1475,8 @@ public final class StubGenerator {
     }
 
     /**
-     * Creates a builder setter method for a repeating group field.
-     * For primitive types: accepts an array parameter.
-     * For complex types: accepts a count and a Consumer for populating elements.
+     * Creates a builder setter method for a repeating group field. For primitive types: accepts an
+     * array parameter. For complex types: accepts a count and a Consumer for populating elements.
      */
     private MethodSpec createRepeatingGroupSetter(
             ClassName builderClassName,
@@ -1438,20 +1505,29 @@ public final class StubGenerator {
             String builderAddMethod = getRepeatingGroupBuilderAddMethod(field.type());
 
             method.addParameter(arrayType, "values")
-                    .addJavadoc("Sets the repeated $L field with the given values.\n"
-                            + "@param values the array of values to write\n"
-                            + "@return this builder for chaining", field.name())
+                    .addJavadoc(
+                            "Sets the repeated $L field with the given values.\n"
+                                    + "@param values the array of values to write\n"
+                                    + "@return this builder for chaining",
+                            field.name())
                     .addStatement("$T.requireNonNull(values, \"values\")", objectsClass)
                     .addStatement("ensureWritable($L, $S)", indexConst, field.name())
                     .beginControlFlow("if (varWriter == null)")
-                    .addStatement("throw new IllegalStateException(\"Message has no variable fields\")")
+                    .addStatement(
+                            "throw new IllegalStateException(\"Message has no variable fields\")")
                     .endControlFlow()
-                    .addStatement("$T handle = varWriter.beginNestedField($L)",
-                            ClassName.get("express.mvp.myra.codec.runtime", "VarFieldWriter", "NestedHandle"),
+                    .addStatement(
+                            "$T handle = varWriter.beginNestedField($L)",
+                            ClassName.get(
+                                    "express.mvp.myra.codec.runtime",
+                                    "VarFieldWriter",
+                                    "NestedHandle"),
                             constantName(field.name(), "VAR_SLOT"))
                     .addStatement("long absoluteOffset = payloadBase + handle.relativeOffset()")
-                    .addStatement("$T groupBuilder = new $T($L)",
-                            RepeatingGroupBuilder.class, RepeatingGroupBuilder.class,
+                    .addStatement(
+                            "$T groupBuilder = new $T($L)",
+                            RepeatingGroupBuilder.class,
+                            RepeatingGroupBuilder.class,
                             getRepeatedElementSize(field))
                     .addStatement("groupBuilder.wrap(segment, absoluteOffset)")
                     .beginControlFlow("for ($T value : values)", elementType)
@@ -1475,28 +1551,43 @@ public final class StubGenerator {
 
             method.addParameter(int.class, "count")
                     .addParameter(consumerType, "elementWriter")
-                    .addJavadoc("Sets the repeated $L field with the given count.\n"
-                            + "The consumer is called for each element to populate it.\n"
-                            + "@param count the number of elements\n"
-                            + "@param elementWriter the consumer to populate each element\n"
-                            + "@return this builder for chaining", field.name())
-                    .addStatement("$T.requireNonNull(elementWriter, \"elementWriter\")", objectsClass)
+                    .addJavadoc(
+                            "Sets the repeated $L field with the given count.\n"
+                                    + "The consumer is called for each element to populate it.\n"
+                                    + "@param count the number of elements\n"
+                                    + "@param elementWriter the consumer to populate each element\n"
+                                    + "@return this builder for chaining",
+                            field.name())
+                    .addStatement(
+                            "$T.requireNonNull(elementWriter, \"elementWriter\")", objectsClass)
                     .addStatement("ensureWritable($L, $S)", indexConst, field.name())
                     .beginControlFlow("if (varWriter == null)")
-                    .addStatement("throw new IllegalStateException(\"Message has no variable fields\")")
+                    .addStatement(
+                            "throw new IllegalStateException(\"Message has no variable fields\")")
                     .endControlFlow()
-                    .addStatement("$T handle = varWriter.beginNestedField($L)",
-                            ClassName.get("express.mvp.myra.codec.runtime", "VarFieldWriter", "NestedHandle"),
+                    .addStatement(
+                            "$T handle = varWriter.beginNestedField($L)",
+                            ClassName.get(
+                                    "express.mvp.myra.codec.runtime",
+                                    "VarFieldWriter",
+                                    "NestedHandle"),
                             constantName(field.name(), "VAR_SLOT"))
                     .addStatement("long absoluteOffset = payloadBase + handle.relativeOffset()")
-                    .addStatement("$T groupBuilder = new $T()",
-                            VariableSizeRepeatingGroupBuilder.class, VariableSizeRepeatingGroupBuilder.class)
+                    .addStatement(
+                            "$T groupBuilder = new $T()",
+                            VariableSizeRepeatingGroupBuilder.class,
+                            VariableSizeRepeatingGroupBuilder.class)
                     .addStatement("groupBuilder.beginWithCount(segment, absoluteOffset, count)")
                     .beginControlFlow("for (int i = 0; i < count; i++)")
                     .addStatement("long elementStart = groupBuilder.beginElement()")
-                    .addStatement("$T elementSlice = segment.asSlice(elementStart, segment.byteSize() - elementStart)",
+                    .addStatement(
+                            "$T elementSlice = segment.asSlice(elementStart, segment.byteSize() -"
+                                    + " elementStart)",
                             MemorySegment.class)
-                    .addStatement("$T nestedBuilder = $T.inline(elementSlice)", childBuilder, childBuilder)
+                    .addStatement(
+                            "$T nestedBuilder = $T.inline(elementSlice)",
+                            childBuilder,
+                            childBuilder)
                     .addStatement("elementWriter.accept(nestedBuilder)")
                     .addStatement("long nestedSize = nestedBuilder.finishInline()")
                     .addStatement("groupBuilder.endElement((int) nestedSize)")
@@ -1515,23 +1606,34 @@ public final class StubGenerator {
             // For strings: accept String array
             method.addParameter(String[].class, "values")
                     .addParameter(MemorySegment.class, "scratchBuffer")
-                    .addJavadoc("Sets the repeated $L field with the given string values.\n"
-                            + "@param values the array of string values\n"
-                            + "@param scratchBuffer scratch buffer for encoding\n"
-                            + "@return this builder for chaining", field.name())
+                    .addJavadoc(
+                            "Sets the repeated $L field with the given string values.\n"
+                                    + "@param values the array of string values\n"
+                                    + "@param scratchBuffer scratch buffer for encoding\n"
+                                    + "@return this builder for chaining",
+                            field.name())
                     .addStatement("$T.requireNonNull(values, \"values\")", objectsClass)
-                    .addStatement("$T.requireNonNull(scratchBuffer, \"scratchBuffer\")", objectsClass)
+                    .addStatement(
+                            "$T.requireNonNull(scratchBuffer, \"scratchBuffer\")", objectsClass)
                     .addStatement("ensureWritable($L, $S)", indexConst, field.name())
                     .beginControlFlow("if (varWriter == null)")
-                    .addStatement("throw new IllegalStateException(\"Message has no variable fields\")")
+                    .addStatement(
+                            "throw new IllegalStateException(\"Message has no variable fields\")")
                     .endControlFlow()
-                    .addStatement("$T handle = varWriter.beginNestedField($L)",
-                            ClassName.get("express.mvp.myra.codec.runtime", "VarFieldWriter", "NestedHandle"),
+                    .addStatement(
+                            "$T handle = varWriter.beginNestedField($L)",
+                            ClassName.get(
+                                    "express.mvp.myra.codec.runtime",
+                                    "VarFieldWriter",
+                                    "NestedHandle"),
                             constantName(field.name(), "VAR_SLOT"))
                     .addStatement("long absoluteOffset = payloadBase + handle.relativeOffset()")
-                    .addStatement("$T groupBuilder = new $T()",
-                            VariableSizeRepeatingGroupBuilder.class, VariableSizeRepeatingGroupBuilder.class)
-                    .addStatement("groupBuilder.beginWithCount(segment, absoluteOffset, values.length)")
+                    .addStatement(
+                            "$T groupBuilder = new $T()",
+                            VariableSizeRepeatingGroupBuilder.class,
+                            VariableSizeRepeatingGroupBuilder.class)
+                    .addStatement(
+                            "groupBuilder.beginWithCount(segment, absoluteOffset, values.length)")
                     .beginControlFlow("for ($T value : values)", String.class)
                     .addStatement("groupBuilder.addString(value, scratchBuffer)")
                     .endControlFlow()
@@ -1548,21 +1650,31 @@ public final class StubGenerator {
         } else {
             // For bytes: accept byte[][] array
             method.addParameter(byte[][].class, "values")
-                    .addJavadoc("Sets the repeated $L field with the given byte arrays.\n"
-                            + "@param values the array of byte arrays\n"
-                            + "@return this builder for chaining", field.name())
+                    .addJavadoc(
+                            "Sets the repeated $L field with the given byte arrays.\n"
+                                    + "@param values the array of byte arrays\n"
+                                    + "@return this builder for chaining",
+                            field.name())
                     .addStatement("$T.requireNonNull(values, \"values\")", objectsClass)
                     .addStatement("ensureWritable($L, $S)", indexConst, field.name())
                     .beginControlFlow("if (varWriter == null)")
-                    .addStatement("throw new IllegalStateException(\"Message has no variable fields\")")
+                    .addStatement(
+                            "throw new IllegalStateException(\"Message has no variable fields\")")
                     .endControlFlow()
-                    .addStatement("$T handle = varWriter.beginNestedField($L)",
-                            ClassName.get("express.mvp.myra.codec.runtime", "VarFieldWriter", "NestedHandle"),
+                    .addStatement(
+                            "$T handle = varWriter.beginNestedField($L)",
+                            ClassName.get(
+                                    "express.mvp.myra.codec.runtime",
+                                    "VarFieldWriter",
+                                    "NestedHandle"),
                             constantName(field.name(), "VAR_SLOT"))
                     .addStatement("long absoluteOffset = payloadBase + handle.relativeOffset()")
-                    .addStatement("$T groupBuilder = new $T()",
-                            VariableSizeRepeatingGroupBuilder.class, VariableSizeRepeatingGroupBuilder.class)
-                    .addStatement("groupBuilder.beginWithCount(segment, absoluteOffset, values.length)")
+                    .addStatement(
+                            "$T groupBuilder = new $T()",
+                            VariableSizeRepeatingGroupBuilder.class,
+                            VariableSizeRepeatingGroupBuilder.class)
+                    .addStatement(
+                            "groupBuilder.beginWithCount(segment, absoluteOffset, values.length)")
                     .beginControlFlow("for (byte[] value : values)")
                     .addStatement("groupBuilder.addBytes(value)")
                     .endControlFlow()
@@ -1578,9 +1690,7 @@ public final class StubGenerator {
         }
     }
 
-    /**
-     * Gets the RepeatingGroupBuilder add method name for a primitive type.
-     */
+    /** Gets the RepeatingGroupBuilder add method name for a primitive type. */
     private String getRepeatingGroupBuilderAddMethod(String schemaType) {
         String underlyingType = getUnderlyingType(schemaType);
         return switch (underlyingType) {
@@ -1591,8 +1701,9 @@ public final class StubGenerator {
             case "int64" -> "addLong";
             case "float32" -> "addFloat";
             case "float64" -> "addDouble";
-            default -> throw new IllegalArgumentException(
-                    "Cannot get builder method for: " + schemaType);
+            default ->
+                    throw new IllegalArgumentException(
+                            "Cannot get builder method for: " + schemaType);
         };
     }
 
@@ -1710,8 +1821,8 @@ public final class StubGenerator {
     }
 
     /**
-     * Determines if a repeated field contains fixed-size elements (primitives or enums).
-     * Such fields use inline encoding: [count][element0][element1]...
+     * Determines if a repeated field contains fixed-size elements (primitives or enums). Such
+     * fields use inline encoding: [count][element0][element1]...
      */
     private boolean isRepeatedPrimitiveOrEnum(ResolvedFieldDefinition field) {
         if (!field.repeated()) return false;
@@ -1722,9 +1833,7 @@ public final class StubGenerator {
         };
     }
 
-    /**
-     * Gets the element size in bytes for a repeated primitive or enum field.
-     */
+    /** Gets the element size in bytes for a repeated primitive or enum field. */
     private int getRepeatedElementSize(ResolvedFieldDefinition field) {
         String underlyingType = getUnderlyingType(field.type());
         return switch (underlyingType) {
@@ -1732,14 +1841,13 @@ public final class StubGenerator {
             case "int16" -> 2;
             case "int32", "float32" -> 4;
             case "int64", "float64" -> 8;
-            default -> throw new IllegalArgumentException(
-                    "Cannot get element size for type: " + field.type());
+            default ->
+                    throw new IllegalArgumentException(
+                            "Cannot get element size for type: " + field.type());
         };
     }
 
-    /**
-     * Gets the Java type for accessing elements of a repeated primitive field.
-     */
+    /** Gets the Java type for accessing elements of a repeated primitive field. */
     private TypeName getRepeatedElementType(ResolvedFieldDefinition field) {
         String underlyingType = getUnderlyingType(field.type());
         return switch (underlyingType) {
@@ -1754,15 +1862,12 @@ public final class StubGenerator {
                 if (isEnum(field.type())) {
                     yield ClassName.get(schema.namespace(), field.type());
                 }
-                throw new IllegalArgumentException(
-                        "Cannot get element type for: " + field.type());
+                throw new IllegalArgumentException("Cannot get element type for: " + field.type());
             }
         };
     }
 
-    /**
-     * Gets the iterator getter method name for a repeated primitive type.
-     */
+    /** Gets the iterator getter method name for a repeated primitive type. */
     private String getIteratorGetterMethod(String schemaType) {
         String underlyingType = getUnderlyingType(schemaType);
         return switch (underlyingType) {
@@ -1773,8 +1878,9 @@ public final class StubGenerator {
             case "int64" -> "getLongAt";
             case "float32" -> "getFloatAt";
             case "float64" -> "getDoubleAt";
-            default -> throw new IllegalArgumentException(
-                    "Cannot get iterator method for: " + schemaType);
+            default ->
+                    throw new IllegalArgumentException(
+                            "Cannot get iterator method for: " + schemaType);
         };
     }
 

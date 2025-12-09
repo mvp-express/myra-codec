@@ -11,18 +11,20 @@ import java.util.Objects;
  * A zero-allocation iterator for repeating groups of fixed-size primitive elements.
  *
  * <p><b>Wire Format (Inline Encoding):</b>
+ *
  * <pre>
  * [count:int32][element0][element1]...[elementN-1]
  * </pre>
  *
- * <p>This iterator provides direct access to elements at specific indices without
- * allocating intermediate objects. Each element is read directly from the underlying
- * memory segment using the specified element size.
+ * <p>This iterator provides direct access to elements at specific indices without allocating
+ * intermediate objects. Each element is read directly from the underlying memory segment using the
+ * specified element size.
  *
- * <p><b>Thread Safety:</b> This class is NOT thread-safe. Each thread should use
- * its own iterator instance. The iterator can be reused by calling {@link #wrap}.
+ * <p><b>Thread Safety:</b> This class is NOT thread-safe. Each thread should use its own iterator
+ * instance. The iterator can be reused by calling {@link #wrap}.
  *
  * <p><b>Example Usage:</b>
+ *
  * <pre>{@code
  * RepeatingGroupIterator iter = new RepeatingGroupIterator(8); // 8 bytes per long
  * iter.wrap(segment, offset);
@@ -63,7 +65,7 @@ public final class RepeatingGroupIterator {
      * Wraps this iterator around a memory segment at the specified offset.
      *
      * @param segment the memory segment containing the repeating group data
-     * @param offset  the offset within the segment where the group starts
+     * @param offset the offset within the segment where the group starts
      * @throws NullPointerException if segment is null
      */
     public void wrap(@NonNull MemorySegment segment, long offset) {
@@ -101,8 +103,8 @@ public final class RepeatingGroupIterator {
     }
 
     /**
-     * Returns the total size of this repeating group in bytes,
-     * including the count field and all element data.
+     * Returns the total size of this repeating group in bytes, including the count field and all
+     * element data.
      *
      * @return total byte size = COUNT_SIZE + (count * elementSize)
      */
@@ -212,8 +214,8 @@ public final class RepeatingGroupIterator {
     }
 
     /**
-     * Returns the offset of the element at the given index within the segment.
-     * This is useful for wrapping flyweight objects at specific positions.
+     * Returns the offset of the element at the given index within the segment. This is useful for
+     * wrapping flyweight objects at specific positions.
      *
      * @param index the element index (0-based)
      * @return the absolute offset within the segment
@@ -233,9 +235,7 @@ public final class RepeatingGroupIterator {
         return segment;
     }
 
-    /**
-     * Resets this iterator, releasing the reference to the segment.
-     */
+    /** Resets this iterator, releasing the reference to the segment. */
     public void reset() {
         this.segment = null;
         this.baseOffset = 0;

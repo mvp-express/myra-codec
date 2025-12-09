@@ -12,9 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-/**
- * Tests for schema version constant generation in StubGenerator.
- */
+/** Tests for schema version constant generation in StubGenerator. */
 @DisplayName("Schema Version Codegen")
 class SchemaVersionCodegenTest {
 
@@ -59,9 +57,11 @@ class SchemaVersionCodegenTest {
             String flyweightSource = findFlyweightSource(files, "TestMessageFlyweight");
 
             assertNotNull(flyweightSource);
-            assertTrue(flyweightSource.contains("SCHEMA_VERSION"),
+            assertTrue(
+                    flyweightSource.contains("SCHEMA_VERSION"),
                     "Should generate SCHEMA_VERSION constant");
-            assertTrue(flyweightSource.contains("public static final short SCHEMA_VERSION"),
+            assertTrue(
+                    flyweightSource.contains("public static final short SCHEMA_VERSION"),
                     "SCHEMA_VERSION should be public static final short");
         }
 
@@ -76,7 +76,8 @@ class SchemaVersionCodegenTest {
 
             assertNotNull(flyweightSource);
             // version 1.0 = (1 * 256) + 0 = 256
-            assertTrue(flyweightSource.contains("(short) 256"),
+            assertTrue(
+                    flyweightSource.contains("(short) 256"),
                     "Version 1.0 should be encoded as 256");
         }
 
@@ -91,7 +92,8 @@ class SchemaVersionCodegenTest {
 
             assertNotNull(flyweightSource);
             // version 2.5 = (2 * 256) + 5 = 517
-            assertTrue(flyweightSource.contains("(short) 517"),
+            assertTrue(
+                    flyweightSource.contains("(short) 517"),
                     "Version 2.5 should be encoded as 517");
         }
 
@@ -105,8 +107,8 @@ class SchemaVersionCodegenTest {
             String flyweightSource = findFlyweightSource(files, "TestMessageFlyweight");
 
             assertNotNull(flyweightSource);
-            assertTrue(flyweightSource.contains("3.10"),
-                    "Should include version string in Javadoc");
+            assertTrue(
+                    flyweightSource.contains("3.10"), "Should include version string in Javadoc");
         }
     }
 
@@ -125,7 +127,8 @@ class SchemaVersionCodegenTest {
 
             assertNotNull(flyweightSource);
             // version 1.5 = (1 * 256) + 5 = 261
-            assertTrue(flyweightSource.contains("(short) 261"),
+            assertTrue(
+                    flyweightSource.contains("(short) 261"),
                     "Version 1.5 should be encoded as 261");
         }
 
@@ -140,8 +143,7 @@ class SchemaVersionCodegenTest {
 
             assertNotNull(flyweightSource);
             // version 0.1 = (0 * 256) + 1 = 1
-            assertTrue(flyweightSource.contains("(short) 1"),
-                    "Version 0.1 should be encoded as 1");
+            assertTrue(flyweightSource.contains("(short) 1"), "Version 0.1 should be encoded as 1");
         }
     }
 
@@ -168,7 +170,8 @@ class SchemaVersionCodegenTest {
             // Check message minor <= decoder minor
             int decoderMinor = decoderWireVersion % 256;
             int messageMinor = messageWireVersion % 256;
-            assertTrue(messageMinor <= decoderMinor,
+            assertTrue(
+                    messageMinor <= decoderMinor,
                     "Message minor version should be <= decoder minor version");
         }
     }

@@ -16,13 +16,13 @@ public class SchemaParser {
         // Defensive normalization: ensure lists are non-null so downstream code doesn't
         // need to defensively check for null. Convert missing collections to empty lists.
         java.util.List<express.mvp.myra.codec.schema.MessageDefinition> parsedMessages =
-            parsed.messages();
+                parsed.messages();
         java.util.List<express.mvp.myra.codec.schema.EnumDefinition> parsedEnums = parsed.enums();
 
         java.util.List<express.mvp.myra.codec.schema.MessageDefinition> messages =
-            (parsedMessages == null) ? java.util.List.of() : parsedMessages;
+                (parsedMessages == null) ? java.util.List.of() : parsedMessages;
         java.util.List<express.mvp.myra.codec.schema.EnumDefinition> enums =
-            (parsedEnums == null) ? java.util.List.of() : parsedEnums;
+                (parsedEnums == null) ? java.util.List.of() : parsedEnums;
 
         return new SchemaDefinition(parsed.namespace(), parsed.version(), messages, enums);
     }

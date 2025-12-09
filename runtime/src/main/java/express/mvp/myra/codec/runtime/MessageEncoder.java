@@ -12,18 +12,21 @@ import java.lang.foreign.MemorySegment;
  * finalize header bookkeeping manually.
  *
  * <h2>Thread Safety</h2>
+ *
  * <p><b>This class is NOT thread-safe.</b> Each thread should use its own {@code MessageEncoder}
  * instance. The encoder maintains mutable state (writer position, header wrapper) that cannot be
  * safely shared across threads.
  *
  * <p>However, the underlying {@link MemorySegmentPool} may be shared across threads if it is
  * thread-safe (such as {@code LockFreeBufferPool}). In typical high-throughput scenarios:
+ *
  * <ul>
- *   <li>Create one {@code MessageEncoder} per thread (or use thread-local)</li>
- *   <li>Share a single {@code MemorySegmentPool} across all encoders</li>
+ *   <li>Create one {@code MessageEncoder} per thread (or use thread-local)
+ *   <li>Share a single {@code MemorySegmentPool} across all encoders
  * </ul>
  *
  * <p><b>Example pattern:</b>
+ *
  * <pre>{@code
  * // Shared pool (thread-safe)
  * MemorySegmentPool pool = new LockFreeBufferPool(64 * 1024, 16);

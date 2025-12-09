@@ -7,24 +7,28 @@ import java.util.regex.Pattern;
 /**
  * Represents a semantic version for myra-codec schemas.
  *
- * <p>Schema versions use semantic versioning (MAJOR.MINOR.PATCH) with the following compatibility rules:
+ * <p>Schema versions use semantic versioning (MAJOR.MINOR.PATCH) with the following compatibility
+ * rules:
+ *
  * <ul>
- *   <li><b>MAJOR:</b> Breaking changes - new field layouts, removed fields, type changes</li>
- *   <li><b>MINOR:</b> Backward-compatible additions - new optional fields, new message types</li>
- *   <li><b>PATCH:</b> Backward-compatible fixes - documentation, cosmetic changes</li>
+ *   <li><b>MAJOR:</b> Breaking changes - new field layouts, removed fields, type changes
+ *   <li><b>MINOR:</b> Backward-compatible additions - new optional fields, new message types
+ *   <li><b>PATCH:</b> Backward-compatible fixes - documentation, cosmetic changes
  * </ul>
  *
- * <p>The wire format encodes version as a single {@code short} value using the formula:
- * {@code (major * 256) + minor} (patch is not encoded in wire format, only used for schema management).
+ * <p>The wire format encodes version as a single {@code short} value using the formula: {@code
+ * (major * 256) + minor} (patch is not encoded in wire format, only used for schema management).
  *
  * <p><b>Wire Format Compatibility:</b>
+ *
  * <ul>
- *   <li>Messages from the same major version are compatible</li>
- *   <li>Decoders can process messages with minor version ≤ their schema's minor version</li>
- *   <li>Major version mismatches should be rejected</li>
+ *   <li>Messages from the same major version are compatible
+ *   <li>Decoders can process messages with minor version ≤ their schema's minor version
+ *   <li>Major version mismatches should be rejected
  * </ul>
  *
  * <p><b>Example:</b>
+ *
  * <pre>{@code
  * SchemaVersion v = SchemaVersion.parse("2.3.1");
  * short wireVersion = v.toWireFormat();  // Returns (2 * 256) + 3 = 515
@@ -46,8 +50,8 @@ public final class SchemaVersion implements Comparable<SchemaVersion> {
     /** Maximum minor version that can be encoded in wire format (0-255). */
     public static final int MAX_MINOR = 255;
 
-    private static final Pattern VERSION_PATTERN = Pattern.compile(
-            "^(\\d+)\\.(\\d+)(?:\\.(\\d+))?$");
+    private static final Pattern VERSION_PATTERN =
+            Pattern.compile("^(\\d+)\\.(\\d+)(?:\\.(\\d+))?$");
 
     private final int major;
     private final int minor;
@@ -101,7 +105,9 @@ public final class SchemaVersion implements Comparable<SchemaVersion> {
         Matcher matcher = VERSION_PATTERN.matcher(versionString.trim());
         if (!matcher.matches()) {
             throw new IllegalArgumentException(
-                    "Invalid version string: '" + versionString + "'. "
+                    "Invalid version string: '"
+                            + versionString
+                            + "'. "
                             + "Expected format: MAJOR.MINOR or MAJOR.MINOR.PATCH");
         }
 
@@ -127,6 +133,7 @@ public final class SchemaVersion implements Comparable<SchemaVersion> {
 
     /**
      * Returns the major version number.
+     *
      * @return the major version (0-127)
      */
     public int major() {
@@ -135,6 +142,7 @@ public final class SchemaVersion implements Comparable<SchemaVersion> {
 
     /**
      * Returns the minor version number.
+     *
      * @return the minor version (0-255)
      */
     public int minor() {
@@ -143,6 +151,7 @@ public final class SchemaVersion implements Comparable<SchemaVersion> {
 
     /**
      * Returns the patch version number.
+     *
      * @return the patch version
      */
     public int patch() {
@@ -150,8 +159,8 @@ public final class SchemaVersion implements Comparable<SchemaVersion> {
     }
 
     /**
-     * Converts this version to the wire format representation.
-     * The formula is: {@code (major * 256) + minor}.
+     * Converts this version to the wire format representation. The formula is: {@code (major * 256)
+     * + minor}.
      *
      * @return the wire format value as a short
      */
@@ -163,9 +172,10 @@ public final class SchemaVersion implements Comparable<SchemaVersion> {
      * Checks if this schema version is compatible with a decoder schema version.
      *
      * <p>Compatibility rules:
+     *
      * <ul>
-     *   <li>Major versions must match exactly</li>
-     *   <li>This version's minor must be ≤ decoder's minor (decoder can handle newer features)</li>
+     *   <li>Major versions must match exactly
+     *   <li>This version's minor must be ≤ decoder's minor (decoder can handle newer features)
      * </ul>
      *
      * @param decoderVersion the version of the decoder/consumer schema
@@ -193,16 +203,24 @@ public final class SchemaVersion implements Comparable<SchemaVersion> {
     @Override
     public int compareTo(SchemaVersion other) {
         int cmp = Integer.compare(this.major, other.major);
-        if (cmp != 0) return cmp;
+        if (cmp != 0) {
+            return cmp;
+        }
         cmp = Integer.compare(this.minor, other.minor);
-        if (cmp != 0) return cmp;
+        if (cmp != 0) {
+            return cmp;
+        }
         return Integer.compare(this.patch, other.patch);
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof SchemaVersion other)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof SchemaVersion other)) {
+            return false;
+        }
         return major == other.major && minor == other.minor && patch == other.patch;
     }
 
@@ -218,6 +236,7 @@ public final class SchemaVersion implements Comparable<SchemaVersion> {
 
     /**
      * Returns a version string without patch for display (e.g., "1.2").
+     *
      * @return the major.minor string
      */
     public String toShortString() {

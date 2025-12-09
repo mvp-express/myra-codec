@@ -21,9 +21,10 @@ package express.mvp.myra.codec.runtime;
  * checks. The real performance gain comes from skipping the CRC32 computation itself.
  *
  * <h2>Thread Safety</h2>
- * <p><b>This class is immutable and thread-safe.</b> A single {@code EncoderConfig} instance
- * can be safely shared across multiple threads and {@link MessageEncoder} instances. The
- * pre-defined constants {@link #DEFAULT} and {@link #HIGH_PERFORMANCE} are designed for sharing.
+ *
+ * <p><b>This class is immutable and thread-safe.</b> A single {@code EncoderConfig} instance can be
+ * safely shared across multiple threads and {@link MessageEncoder} instances. The pre-defined
+ * constants {@link #DEFAULT} and {@link #HIGH_PERFORMANCE} are designed for sharing.
  */
 public final class EncoderConfig {
 

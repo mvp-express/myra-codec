@@ -13,23 +13,28 @@ import java.util.Objects;
  * A builder for writing repeating groups of variable-size elements.
  *
  * <p><b>Wire Format (Offset Table Encoding):</b>
+ *
  * <pre>
  * [count:int32][offset0:int32][offset1:int32]...[offsetN-1:int32][element0_data][element1_data]...
  * </pre>
  *
- * <p>Each offset is relative to the start of the element data region (after the offset table).
- * This enables O(1) random access during reading.
+ * <p>Each offset is relative to the start of the element data region (after the offset table). This
+ * enables O(1) random access during reading.
  *
  * <p><b>Two-Phase Writing:</b>
+ *
  * <ol>
- *   <li>Call {@link #beginWithCount(MemorySegment, long, int)} to reserve space for count and offset table</li>
- *   <li>Call {@link #addString}, {@link #addBytes}, or {@link #beginElement}/{@link #endElement} for each element</li>
- *   <li>Call {@link #finish()} to finalize offsets and return total bytes written</li>
+ *   <li>Call {@link #beginWithCount(MemorySegment, long, int)} to reserve space for count and
+ *       offset table
+ *   <li>Call {@link #addString}, {@link #addBytes}, or {@link #beginElement}/{@link #endElement}
+ *       for each element
+ *   <li>Call {@link #finish()} to finalize offsets and return total bytes written
  * </ol>
  *
  * <p><b>Thread Safety:</b> This class is NOT thread-safe.
  *
  * <p><b>Example Usage with Strings:</b>
+ *
  * <pre>{@code
  * VariableSizeRepeatingGroupBuilder builder = new VariableSizeRepeatingGroupBuilder();
  * builder.beginWithCount(segment, offset, 3);
@@ -40,6 +45,7 @@ import java.util.Objects;
  * }</pre>
  *
  * <p><b>Example Usage with Nested Messages:</b>
+ *
  * <pre>{@code
  * VariableSizeRepeatingGroupBuilder builder = new VariableSizeRepeatingGroupBuilder();
  * builder.beginWithCount(segment, offset, 2);
@@ -78,21 +84,19 @@ public final class VariableSizeRepeatingGroupBuilder {
     private long writeOffset;
     private int currentDataOffset; // Relative offset for offset table entries
 
-    /**
-     * Creates a new builder for variable-size elements.
-     */
+    /** Creates a new builder for variable-size elements. */
     public VariableSizeRepeatingGroupBuilder() {
         // Default constructor
     }
 
     /**
-     * Begins writing a repeating group with a known element count.
-     * This reserves space for the count field and offset table.
+     * Begins writing a repeating group with a known element count. This reserves space for the
+     * count field and offset table.
      *
      * @param segment the memory segment to write to
-     * @param offset  the offset within the segment where the group starts
-     * @param count   the number of elements that will be written
-     * @throws NullPointerException     if segment is null
+     * @param offset the offset within the segment where the group starts
+     * @param count the number of elements that will be written
+     * @throws NullPointerException if segment is null
      * @throws IllegalArgumentException if count is negative
      */
     public void beginWithCount(@NonNull MemorySegment segment, long offset, int count) {
@@ -173,10 +177,10 @@ public final class VariableSizeRepeatingGroupBuilder {
     }
 
     /**
-     * Adds a string element using a scratch buffer for UTF-8 encoding.
-     * This is more efficient than addString(String) for repeated calls.
+     * Adds a string element using a scratch buffer for UTF-8 encoding. This is more efficient than
+     * addString(String) for repeated calls.
      *
-     * @param value         the string value to add
+     * @param value the string value to add
      * @param scratchBuffer a pre-allocated buffer for encoding
      * @return this builder for chaining
      */
@@ -242,7 +246,8 @@ public final class VariableSizeRepeatingGroupBuilder {
      * @param length the number of bytes to copy
      * @return this builder for chaining
      */
-    public VariableSizeRepeatingGroupBuilder addBytes(MemorySegment source, long offset, int length) {
+    public VariableSizeRepeatingGroupBuilder addBytes(
+            MemorySegment source, long offset, int length) {
         checkCanAdd();
         Objects.requireNonNull(source, "source");
 
@@ -265,11 +270,10 @@ public final class VariableSizeRepeatingGroupBuilder {
     // =========================================================================
 
     /**
-     * Begins writing a nested message element.
-     * Returns the offset where the caller should write the message data.
+     * Begins writing a nested message element. Returns the offset where the caller should write the
+     * message data.
      *
-     * <p>After writing the message, call {@link #endElement(int)} with the
-     * number of bytes written.
+     * <p>After writing the message, call {@link #endElement(int)} with the number of bytes written.
      *
      * @return the absolute offset where element data should be written
      * @throws IllegalStateException if all expected elements have been written
@@ -295,18 +299,13 @@ public final class VariableSizeRepeatingGroupBuilder {
      * Convenience method to write a flyweight as an element.
      *
      * @param flyweight the flyweight containing the data to write
-     * @param <T>       the flyweight type
+     * @param <T> the flyweight type
      * @return this builder for chaining
      */
     public <T extends FlyweightAccessor> VariableSizeRepeatingGroupBuilder addElement(T flyweight) {
         long elementStart = beginElement();
         // Copy flyweight data to our segment
-        MemorySegment.copy(
-                flyweight.segment(),
-                0,
-                segment,
-                elementStart,
-                flyweight.byteSize());
+        MemorySegment.copy(flyweight.segment(), 0, segment, elementStart, flyweight.byteSize());
         endElement(flyweight.byteSize());
         return this;
     }
@@ -318,13 +317,19 @@ public final class VariableSizeRepeatingGroupBuilder {
     private void checkCanAdd() {
         if (currentIndex >= maxCount) {
             throw new IllegalStateException(
-                    "Cannot add more elements. Expected " + maxCount + ", already wrote " + currentIndex);
+                    "Cannot add more elements. Expected "
+                            + maxCount
+                            + ", already wrote "
+                            + currentIndex);
         }
     }
 
     private void recordOffset() {
         // Write the relative offset for this element
-        segment.set(INT_BE, offsetTableStart + (long) currentIndex * OFFSET_ENTRY_SIZE, currentDataOffset);
+        segment.set(
+                INT_BE,
+                offsetTableStart + (long) currentIndex * OFFSET_ENTRY_SIZE,
+                currentDataOffset);
     }
 
     // =========================================================================
@@ -332,8 +337,7 @@ public final class VariableSizeRepeatingGroupBuilder {
     // =========================================================================
 
     /**
-     * Finishes writing the repeating group.
-     * Validates that all expected elements were written.
+     * Finishes writing the repeating group. Validates that all expected elements were written.
      *
      * @return the total number of bytes written (count + offset table + element data)
      * @throws IllegalStateException if fewer elements were written than expected
@@ -347,8 +351,8 @@ public final class VariableSizeRepeatingGroupBuilder {
     }
 
     /**
-     * Finishes writing and allows fewer elements than originally expected.
-     * Updates the count field to reflect actual elements written.
+     * Finishes writing and allows fewer elements than originally expected. Updates the count field
+     * to reflect actual elements written.
      *
      * @return the total number of bytes written
      */
@@ -368,9 +372,7 @@ public final class VariableSizeRepeatingGroupBuilder {
         return segment;
     }
 
-    /**
-     * Resets this builder, releasing the reference to the segment.
-     */
+    /** Resets this builder, releasing the reference to the segment. */
     public void reset() {
         this.segment = null;
         this.baseOffset = 0;
