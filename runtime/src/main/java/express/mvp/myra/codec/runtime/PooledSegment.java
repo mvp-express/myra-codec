@@ -32,6 +32,7 @@ import java.lang.foreign.MemorySegment;
  * }</pre>
  */
 public final class PooledSegment implements AutoCloseable {
+    // TODO: remove this class from myra codec runtime since it's available in roray ffm utils
     private final MemorySegment segment;
     private final MemorySegmentPool pool;
 
