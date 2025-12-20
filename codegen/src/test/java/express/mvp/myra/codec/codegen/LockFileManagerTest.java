@@ -25,7 +25,7 @@ class LockFileManagerTest {
         Path lockPath = tempDir.resolve("test.myra.lock");
 
         LockFile original = LockFile.empty();
-        original.schemaInfo = Map.of("version", "1.0.0", "sourceFile", "test.myra.yml");
+        original.schemaInfo = Map.of("namespace", "com.test", "version", "1.0.0", "sourceFile", "test.myra.yml");
 
         LockFile.MessageLock msgLock = new LockFile.MessageLock();
         msgLock.id = 1;
@@ -41,6 +41,7 @@ class LockFileManagerTest {
 
         LockFile loaded = LockFileManager.load(lockPath);
         assertNotNull(loaded);
+        assertEquals("com.test", loaded.schemaInfo.get("namespace"));
         assertEquals("1.0.0", loaded.schemaInfo.get("version"));
         assertEquals("test.myra.yml", loaded.schemaInfo.get("sourceFile"));
         assertEquals(1, loaded.messages.get("TestMessage").id);

@@ -14,17 +14,20 @@ import org.junit.jupiter.api.Test;
  * Tests for repeating group code generation in the StubGenerator.
  *
  * <p>Wire format decisions:
+ *
  * <ul>
  *   <li><b>Primitive types</b>: Inline encoding - [count:int32][element0][element1]...
- *   <li><b>Variable-size types</b>: Offset table encoding - [count:int32][offset_table][element_data]
+ *   <li><b>Variable-size types</b>: Offset table encoding -
+ *       [count:int32][offset_table][element_data]
  * </ul>
  *
  * <p>This test class validates that the StubGenerator correctly generates:
+ *
  * <ol>
- *   <li>Repeating group accessors (count, element iterator)</li>
- *   <li>Flyweight readers for inline primitive arrays</li>
- *   <li>Offset table handling for variable-size elements</li>
- *   <li>Builder methods for populating repeating groups</li>
+ *   <li>Repeating group accessors (count, element iterator)
+ *   <li>Flyweight readers for inline primitive arrays
+ *   <li>Offset table handling for variable-size elements
+ *   <li>Builder methods for populating repeating groups
  * </ol>
  */
 @DisplayName("Repeating Groups Codegen Tests")
@@ -35,8 +38,8 @@ class RepeatingGroupsTest {
     // =========================================================================
 
     /**
-     * Creates a schema with a simple repeated primitive field (int64[]).
-     * Expected wire format: [count:4 bytes][elements: count * 8 bytes]
+     * Creates a schema with a simple repeated primitive field (int64[]). Expected wire format:
+     * [count:4 bytes][elements: count * 8 bytes]
      */
     private ResolvedSchemaDefinition createPrimitiveRepeatedSchema() {
         return new ResolvedSchemaDefinition(
@@ -48,8 +51,15 @@ class RepeatingGroupsTest {
                                 1,
                                 List.of(
                                         new ResolvedFieldDefinition(
-                                                "instrumentId", 1, 1, "int32", false, false, false,
-                                                "", null),
+                                                "instrumentId",
+                                                1,
+                                                1,
+                                                "int32",
+                                                false,
+                                                false,
+                                                false,
+                                                "",
+                                                null),
                                         new ResolvedFieldDefinition(
                                                 "prices", 2, 2, "int64", false, true, false, "",
                                                 null)))),
@@ -57,8 +67,8 @@ class RepeatingGroupsTest {
     }
 
     /**
-     * Creates a schema with a repeated nested message field.
-     * Expected wire format: [count:4 bytes][offset_table: count * 4 bytes][element_data]
+     * Creates a schema with a repeated nested message field. Expected wire format: [count:4
+     * bytes][offset_table: count * 4 bytes][element_data]
      */
     private ResolvedSchemaDefinition createNestedMessageRepeatedSchema() {
         return new ResolvedSchemaDefinition(
@@ -70,8 +80,15 @@ class RepeatingGroupsTest {
                                 1,
                                 List.of(
                                         new ResolvedFieldDefinition(
-                                                "priceNanos", 1, 1, "int64", false, false, false,
-                                                "", null),
+                                                "priceNanos",
+                                                1,
+                                                1,
+                                                "int64",
+                                                false,
+                                                false,
+                                                false,
+                                                "",
+                                                null),
                                         new ResolvedFieldDefinition(
                                                 "size", 2, 2, "int32", false, false, false, "",
                                                 null))),
@@ -92,8 +109,8 @@ class RepeatingGroupsTest {
     }
 
     /**
-     * Creates a schema with repeated string fields.
-     * Expected wire format: [count:4 bytes][offset_table: count * 4 bytes][string_data]
+     * Creates a schema with repeated string fields. Expected wire format: [count:4
+     * bytes][offset_table: count * 4 bytes][string_data]
      */
     private ResolvedSchemaDefinition createStringRepeatedSchema() {
         return new ResolvedSchemaDefinition(
@@ -105,7 +122,14 @@ class RepeatingGroupsTest {
                                 1,
                                 List.of(
                                         new ResolvedFieldDefinition(
-                                                "entityId", 1, 1, "int64", false, false, false, "",
+                                                "entityId",
+                                                1,
+                                                1,
+                                                "int64",
+                                                false,
+                                                false,
+                                                false,
+                                                "",
                                                 null),
                                         new ResolvedFieldDefinition(
                                                 "tags", 2, 2, "string", false, true, false, "",
@@ -114,8 +138,8 @@ class RepeatingGroupsTest {
     }
 
     /**
-     * Creates a schema with repeated enum fields (fixed-size).
-     * Expected wire format: [count:4 bytes][elements: count * enum_size bytes]
+     * Creates a schema with repeated enum fields (fixed-size). Expected wire format: [count:4
+     * bytes][elements: count * enum_size bytes]
      */
     private ResolvedSchemaDefinition createEnumRepeatedSchema() {
         return new ResolvedSchemaDefinition(
@@ -141,9 +165,7 @@ class RepeatingGroupsTest {
                                         new EnumValueDefinition("SELL", 1)))));
     }
 
-    /**
-     * Creates a schema with an optional repeated field.
-     */
+    /** Creates a schema with an optional repeated field. */
     private ResolvedSchemaDefinition createOptionalRepeatedSchema() {
         return new ResolvedSchemaDefinition(
                 "express.mvp.myra.test",
@@ -161,9 +183,7 @@ class RepeatingGroupsTest {
                 List.of());
     }
 
-    /**
-     * Creates a schema with multiple different primitive repeated fields.
-     */
+    /** Creates a schema with multiple different primitive repeated fields. */
     private ResolvedSchemaDefinition createMultiPrimitiveRepeatedSchema() {
         return new ResolvedSchemaDefinition(
                 "express.mvp.myra.test",
@@ -176,13 +196,34 @@ class RepeatingGroupsTest {
                                         new ResolvedFieldDefinition(
                                                 "id", 1, 1, "int64", false, false, false, "", null),
                                         new ResolvedFieldDefinition(
-                                                "byteValues", 2, 2, "int8", false, true, false, "",
+                                                "byteValues",
+                                                2,
+                                                2,
+                                                "int8",
+                                                false,
+                                                true,
+                                                false,
+                                                "",
                                                 null),
                                         new ResolvedFieldDefinition(
-                                                "intValues", 3, 3, "int32", false, true, false, "",
+                                                "intValues",
+                                                3,
+                                                3,
+                                                "int32",
+                                                false,
+                                                true,
+                                                false,
+                                                "",
                                                 null),
                                         new ResolvedFieldDefinition(
-                                                "longValues", 4, 4, "int64", false, true, false, "",
+                                                "longValues",
+                                                4,
+                                                4,
+                                                "int64",
+                                                false,
+                                                true,
+                                                false,
+                                                "",
                                                 null)))),
                 List.of());
     }
@@ -208,7 +249,8 @@ class RepeatingGroupsTest {
 
             // Should have a count getter method
             assertTrue(
-                    flyweightSource.contains("pricesCount()") || flyweightSource.contains("getPricesCount()"),
+                    flyweightSource.contains("pricesCount()")
+                            || flyweightSource.contains("getPricesCount()"),
                     "Should generate count getter for repeated field 'prices'");
         }
 
@@ -266,7 +308,8 @@ class RepeatingGroupsTest {
 
             // Should have count getter for bids
             assertTrue(
-                    flyweightSource.contains("bidsCount()") || flyweightSource.contains("getBidsCount()"),
+                    flyweightSource.contains("bidsCount()")
+                            || flyweightSource.contains("getBidsCount()"),
                     "Should generate count getter for repeated nested field 'bids'");
         }
 
@@ -283,7 +326,8 @@ class RepeatingGroupsTest {
 
             // Should have a flyweight view for iteration
             assertTrue(
-                    flyweightSource.contains("bidsView") || flyweightSource.contains("bidsFlyweight"),
+                    flyweightSource.contains("bidsView")
+                            || flyweightSource.contains("bidsFlyweight"),
                     "Should generate view/flyweight field for iterable access");
         }
 
@@ -300,7 +344,8 @@ class RepeatingGroupsTest {
 
             // Should have presence check method
             assertTrue(
-                    flyweightSource.contains("hasValues()") || flyweightSource.contains("isValuesPresent()"),
+                    flyweightSource.contains("hasValues()")
+                            || flyweightSource.contains("isValuesPresent()"),
                     "Should generate presence check for optional repeated field");
         }
     }
@@ -326,7 +371,8 @@ class RepeatingGroupsTest {
 
             // Builder should have a method to set the entire array OR add elements
             assertTrue(
-                    builderSource.contains("setPrices(") || builderSource.contains("addPrice(")
+                    builderSource.contains("setPrices(")
+                            || builderSource.contains("addPrice(")
                             || builderSource.contains("prices("),
                     "Builder should have setter/adder for repeated primitive field");
         }
@@ -344,8 +390,10 @@ class RepeatingGroupsTest {
 
             // Builder should have method to start writing group with count
             assertTrue(
-                    builderSource.contains("bidsCount(") || builderSource.contains("setBidsCount(")
-                            || builderSource.contains("beginBids(") || builderSource.contains("setBids("),
+                    builderSource.contains("bidsCount(")
+                            || builderSource.contains("setBidsCount(")
+                            || builderSource.contains("beginBids(")
+                            || builderSource.contains("setBids("),
                     "Builder should have count/begin method for repeated nested messages");
         }
 
@@ -407,7 +455,8 @@ class RepeatingGroupsTest {
 
             // Enum repeated fields should behave like primitive repeated fields
             assertTrue(
-                    flyweightSource.contains("sidesCount()") || flyweightSource.contains("getSidesCount()"),
+                    flyweightSource.contains("sidesCount()")
+                            || flyweightSource.contains("getSidesCount()"),
                     "Should generate count getter for repeated enum field");
         }
     }
@@ -424,22 +473,25 @@ class RepeatingGroupsTest {
         @DisplayName("Should parse repeating_groups.myra.yml test schema correctly")
         void shouldParseRepeatingGroupsSchema() throws Exception {
             SchemaParser parser = new SchemaParser();
-            var schema = parser.parse(
-                    java.nio.file.Path.of("src/test/resources/repeating_groups.myra.yml"));
+            var schema =
+                    parser.parse(
+                            java.nio.file.Path.of("src/test/resources/repeating_groups.myra.yml"));
 
             assertNotNull(schema, "Schema should parse successfully");
 
             // Find PriceList message
-            var priceList = schema.messages().stream()
-                    .filter(m -> m.name().equals("PriceList"))
-                    .findFirst()
-                    .orElseThrow(() -> new AssertionError("PriceList message not found"));
+            var priceList =
+                    schema.messages().stream()
+                            .filter(m -> m.name().equals("PriceList"))
+                            .findFirst()
+                            .orElseThrow(() -> new AssertionError("PriceList message not found"));
 
             // Verify prices field is marked as repeated
-            var pricesField = priceList.fields().stream()
-                    .filter(f -> f.name().equals("prices"))
-                    .findFirst()
-                    .orElseThrow(() -> new AssertionError("prices field not found"));
+            var pricesField =
+                    priceList.fields().stream()
+                            .filter(f -> f.name().equals("prices"))
+                            .findFirst()
+                            .orElseThrow(() -> new AssertionError("prices field not found"));
 
             assertTrue(pricesField.repeated(), "prices field should be marked as repeated");
             assertEquals("int64", pricesField.type(), "prices field should be int64 type");
@@ -449,18 +501,21 @@ class RepeatingGroupsTest {
         @DisplayName("Should parse nested message repeated fields")
         void shouldParseNestedMessageRepeatedFields() throws Exception {
             SchemaParser parser = new SchemaParser();
-            var schema = parser.parse(
-                    java.nio.file.Path.of("src/test/resources/repeating_groups.myra.yml"));
+            var schema =
+                    parser.parse(
+                            java.nio.file.Path.of("src/test/resources/repeating_groups.myra.yml"));
 
-            var orderBook = schema.messages().stream()
-                    .filter(m -> m.name().equals("OrderBook"))
-                    .findFirst()
-                    .orElseThrow(() -> new AssertionError("OrderBook message not found"));
+            var orderBook =
+                    schema.messages().stream()
+                            .filter(m -> m.name().equals("OrderBook"))
+                            .findFirst()
+                            .orElseThrow(() -> new AssertionError("OrderBook message not found"));
 
-            var bidsField = orderBook.fields().stream()
-                    .filter(f -> f.name().equals("bids"))
-                    .findFirst()
-                    .orElseThrow(() -> new AssertionError("bids field not found"));
+            var bidsField =
+                    orderBook.fields().stream()
+                            .filter(f -> f.name().equals("bids"))
+                            .findFirst()
+                            .orElseThrow(() -> new AssertionError("bids field not found"));
 
             assertTrue(bidsField.repeated(), "bids field should be marked as repeated");
             assertEquals("Level", bidsField.type(), "bids field should be Level type");
@@ -470,18 +525,22 @@ class RepeatingGroupsTest {
         @DisplayName("Should parse optional repeated fields")
         void shouldParseOptionalRepeatedFields() throws Exception {
             SchemaParser parser = new SchemaParser();
-            var schema = parser.parse(
-                    java.nio.file.Path.of("src/test/resources/repeating_groups.myra.yml"));
+            var schema =
+                    parser.parse(
+                            java.nio.file.Path.of("src/test/resources/repeating_groups.myra.yml"));
 
-            var optionalList = schema.messages().stream()
-                    .filter(m -> m.name().equals("OptionalList"))
-                    .findFirst()
-                    .orElseThrow(() -> new AssertionError("OptionalList message not found"));
+            var optionalList =
+                    schema.messages().stream()
+                            .filter(m -> m.name().equals("OptionalList"))
+                            .findFirst()
+                            .orElseThrow(
+                                    () -> new AssertionError("OptionalList message not found"));
 
-            var valuesField = optionalList.fields().stream()
-                    .filter(f -> f.name().equals("values"))
-                    .findFirst()
-                    .orElseThrow(() -> new AssertionError("values field not found"));
+            var valuesField =
+                    optionalList.fields().stream()
+                            .filter(f -> f.name().equals("values"))
+                            .findFirst()
+                            .orElseThrow(() -> new AssertionError("values field not found"));
 
             assertTrue(valuesField.repeated(), "values field should be marked as repeated");
             assertTrue(valuesField.optional(), "values field should be marked as optional");

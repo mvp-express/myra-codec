@@ -13,14 +13,14 @@ public record FieldDefinition(
         @JsonAlias("fixed_capacity") Integer fixedCapacity) {
     public FieldDefinition {
         if (tag < 1) {
-            throw new IllegalArgumentException("tag must be >= 1");
+            throw new IllegalArgumentException("Tag must be greater than 0");
         }
         // Provide defaults for missing values
         if (deprecationNote == null) {
-            deprecationNote = "";
+            deprecationNote = "Deprecated field";
         }
         if (fixedCapacity != null && fixedCapacity < 0) {
-            throw new IllegalArgumentException("fixedCapacity must be positive when provided");
+            throw new IllegalArgumentException("Fixed capacity must be non-negative");
         }
     }
 }

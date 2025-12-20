@@ -46,6 +46,14 @@ public final class SchemaResolver {
     }
 
     private ResolutionResult runResolution(Path schemaPath) {
+        // Validate that any existing lock file refers to the same schema namespace
+        if (lockFile != null && lockFile.schemaInfo != null) {
+            Object ns = lockFile.schemaInfo.get("namespace");
+            if (ns instanceof String && !rawSchema.namespace().equals(ns)) {
+                throw new IllegalStateException(
+                        "Lock file schema namespace '" + ns + "' does not match schema '" + rawSchema.namespace() + "'");
+            }
+        }
         resolveMessages();
         resolveEnums();
         LockFile updatedLockFile = buildUpdatedLockFile(schemaPath);
@@ -237,11 +245,13 @@ public final class SchemaResolver {
 
         LockFile result = LockFile.empty();
         result.schemaInfo =
-                Map.of(
-                        "sourceFile",
-                        schemaPath.getFileName().toString(),
-                        "version",
-                        rawSchema.version());
+            Map.of(
+                "namespace",
+                rawSchema.namespace(),
+                "sourceFile",
+                schemaPath.getFileName().toString(),
+                "version",
+                rawSchema.version());
         result.messages = newMessagesLock;
         result.enums = newEnumsLock;
         result.reservedIds = reservedIds;

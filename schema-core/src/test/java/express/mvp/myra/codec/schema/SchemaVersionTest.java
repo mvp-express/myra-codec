@@ -9,9 +9,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-/**
- * Tests for SchemaVersion parsing, wire format encoding, and compatibility checks.
- */
+/** Tests for SchemaVersion parsing, wire format encoding, and compatibility checks. */
 @DisplayName("SchemaVersion")
 class SchemaVersionTest {
 
@@ -21,12 +19,12 @@ class SchemaVersionTest {
 
         @ParameterizedTest
         @CsvSource({
-                "1.0.0,    1, 0, 0",
-                "2.3.5,    2, 3, 5",
-                "0.1.0,    0, 1, 0",
-                "127.255.999, 127, 255, 999",
-                "1.0,      1, 0, 0",
-                "2.5,      2, 5, 0",
+            "1.0.0,    1, 0, 0",
+            "2.3.5,    2, 3, 5",
+            "0.1.0,    0, 1, 0",
+            "127.255.999, 127, 255, 999",
+            "1.0,      1, 0, 0",
+            "2.5,      2, 5, 0",
         })
         @DisplayName("Should parse valid version strings")
         void shouldParseValidVersionStrings(String versionStr, int major, int minor, int patch) {
@@ -37,18 +35,15 @@ class SchemaVersionTest {
         }
 
         @ParameterizedTest
-        @ValueSource(strings = {
-                "",
-                "1",
-                "1.2.3.4",
-                "abc",
-                "1.x.0",
-                "-1.0.0",
-                "v1.0.0",
-        })
+        @ValueSource(
+                strings = {
+                    "", "1", "1.2.3.4", "abc", "1.x.0", "-1.0.0", "v1.0.0",
+                })
         @DisplayName("Should reject invalid version strings")
         void shouldRejectInvalidVersionStrings(String versionStr) {
-            assertThrows(IllegalArgumentException.class, () -> SchemaVersion.parse(versionStr),
+            assertThrows(
+                    IllegalArgumentException.class,
+                    () -> SchemaVersion.parse(versionStr),
                     "Should reject: " + versionStr);
         }
 
@@ -117,12 +112,12 @@ class SchemaVersionTest {
 
         @ParameterizedTest
         @CsvSource({
-                "0, 0, 0",
-                "0, 1, 1",
-                "1, 0, 256",
-                "1, 1, 257",
-                "2, 5, 517",
-                "127, 255, 32767",
+            "0, 0, 0",
+            "0, 1, 1",
+            "1, 0, 256",
+            "1, 1, 257",
+            "2, 5, 517",
+            "127, 255, 32767",
         })
         @DisplayName("Should encode to wire format correctly")
         void shouldEncodeToWireFormat(int major, int minor, int expected) {
@@ -132,12 +127,12 @@ class SchemaVersionTest {
 
         @ParameterizedTest
         @CsvSource({
-                "0, 0, 0",
-                "1, 0, 1",
-                "256, 1, 0",
-                "257, 1, 1",
-                "517, 2, 5",
-                "32767, 127, 255",
+            "0, 0, 0",
+            "1, 0, 1",
+            "256, 1, 0",
+            "257, 1, 1",
+            "517, 2, 5",
+            "32767, 127, 255",
         })
         @DisplayName("Should decode from wire format correctly")
         void shouldDecodeFromWireFormat(short wireVersion, int major, int minor) {
@@ -188,7 +183,8 @@ class SchemaVersionTest {
         void olderMinorCompatibleWithNewerDecoder() {
             SchemaVersion message = new SchemaVersion(1, 3, 0);
             SchemaVersion decoder = new SchemaVersion(1, 5, 0);
-            assertTrue(message.isCompatibleWith(decoder),
+            assertTrue(
+                    message.isCompatibleWith(decoder),
                     "Message v1.3 should be readable by decoder v1.5");
         }
 
@@ -197,7 +193,8 @@ class SchemaVersionTest {
         void newerMinorNotCompatibleWithOlderDecoder() {
             SchemaVersion message = new SchemaVersion(1, 5, 0);
             SchemaVersion decoder = new SchemaVersion(1, 3, 0);
-            assertFalse(message.isCompatibleWith(decoder),
+            assertFalse(
+                    message.isCompatibleWith(decoder),
                     "Message v1.5 should NOT be readable by decoder v1.3");
         }
 

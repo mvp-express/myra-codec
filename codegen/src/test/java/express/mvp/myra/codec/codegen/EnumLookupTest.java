@@ -12,9 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-/**
- * Tests for O(1) enum lookup array generation in StubGenerator.
- */
+/** Tests for O(1) enum lookup array generation in StubGenerator. */
 @DisplayName("Enum O(1) Lookup Array Generation")
 class EnumLookupTest {
 
@@ -25,7 +23,7 @@ class EnumLookupTest {
         for (int i = 0; i < ids.length; i++) {
             values.add(new EnumValueDefinition("VALUE_" + i, ids[i]));
         }
-        
+
         return new ResolvedSchemaDefinition(
                 NAMESPACE,
                 "1.0.0",
@@ -57,9 +55,11 @@ class EnumLookupTest {
             String enumSource = findEnumSource(files, "Side");
 
             assertNotNull(enumSource, "Side enum should be generated");
-            assertTrue(enumSource.contains("VALUES_BY_ID"), 
+            assertTrue(
+                    enumSource.contains("VALUES_BY_ID"),
                     "Should generate VALUES_BY_ID lookup array");
-            assertTrue(enumSource.contains("private static final Side[] VALUES_BY_ID"),
+            assertTrue(
+                    enumSource.contains("private static final Side[] VALUES_BY_ID"),
                     "VALUES_BY_ID should be private static final array");
         }
 
@@ -74,12 +74,14 @@ class EnumLookupTest {
 
             assertNotNull(enumSource);
             // Check for static initializer pattern
-            assertTrue(enumSource.contains("VALUES_BY_ID = new OrderType["),
+            assertTrue(
+                    enumSource.contains("VALUES_BY_ID = new OrderType["),
                     "Should initialize VALUES_BY_ID array");
-            assertTrue(enumSource.contains("for (OrderType e : values())"),
+            assertTrue(
+                    enumSource.contains("for (OrderType e : values())"),
                     "Should iterate over values() in static initializer");
-            assertTrue(enumSource.contains("VALUES_BY_ID[e.id] = e"),
-                    "Should populate array by id");
+            assertTrue(
+                    enumSource.contains("VALUES_BY_ID[e.id] = e"), "Should populate array by id");
         }
 
         @Test
@@ -92,10 +94,10 @@ class EnumLookupTest {
             String enumSource = findEnumSource(files, "Status");
 
             assertNotNull(enumSource);
-            assertTrue(enumSource.contains("public static Status fromId(int id)"),
+            assertTrue(
+                    enumSource.contains("public static Status fromId(int id)"),
                     "Should generate fromId method");
-            assertTrue(enumSource.contains("VALUES_BY_ID[id]"),
-                    "fromId should use array lookup");
+            assertTrue(enumSource.contains("VALUES_BY_ID[id]"), "fromId should use array lookup");
         }
 
         @Test
@@ -108,9 +110,11 @@ class EnumLookupTest {
             String enumSource = findEnumSource(files, "Priority");
 
             assertNotNull(enumSource);
-            assertTrue(enumSource.contains("public static Priority fromIdOrNull(int id)"),
+            assertTrue(
+                    enumSource.contains("public static Priority fromIdOrNull(int id)"),
                     "Should generate fromIdOrNull method");
-            assertTrue(enumSource.contains("return null"),
+            assertTrue(
+                    enumSource.contains("return null"),
                     "fromIdOrNull should return null for unknown ids");
         }
 
@@ -126,9 +130,11 @@ class EnumLookupTest {
 
             assertNotNull(enumSource);
             // Array size should be maxId + 1 = 11
-            assertTrue(enumSource.contains("VALUES_BY_ID = new SparseEnum[11]"),
+            assertTrue(
+                    enumSource.contains("VALUES_BY_ID = new SparseEnum[11]"),
                     "Array size should accommodate max ID");
-            assertTrue(enumSource.contains("VALUES_BY_ID"),
+            assertTrue(
+                    enumSource.contains("VALUES_BY_ID"),
                     "Should still use O(1) lookup for sparse ranges");
         }
 
@@ -143,10 +149,10 @@ class EnumLookupTest {
             String enumSource = findEnumSource(files, "Side");
 
             assertNotNull(enumSource);
-            assertTrue(enumSource.contains("VALUES_BY_ID"),
+            assertTrue(
+                    enumSource.contains("VALUES_BY_ID"),
                     "Should use O(1) lookup even for non-zero starting IDs");
-            assertTrue(enumSource.contains("if (id < 0"),
-                    "Should check for negative IDs");
+            assertTrue(enumSource.contains("if (id < 0"), "Should check for negative IDs");
         }
     }
 
@@ -166,10 +172,12 @@ class EnumLookupTest {
 
             assertNotNull(enumSource);
             // Should NOT have VALUES_BY_ID array
-            assertFalse(enumSource.contains("VALUES_BY_ID"),
+            assertFalse(
+                    enumSource.contains("VALUES_BY_ID"),
                     "Should not generate lookup array for large ID ranges");
             // Should have linear search loop
-            assertTrue(enumSource.contains("for (LargeIdEnum e : values())"),
+            assertTrue(
+                    enumSource.contains("for (LargeIdEnum e : values())"),
                     "Should use linear search for large ID ranges");
         }
 
@@ -185,10 +193,12 @@ class EnumLookupTest {
 
             assertNotNull(enumSource);
             // Should NOT have VALUES_BY_ID array
-            assertFalse(enumSource.contains("VALUES_BY_ID"),
+            assertFalse(
+                    enumSource.contains("VALUES_BY_ID"),
                     "Should not generate lookup array for negative IDs");
             // Should have linear search
-            assertTrue(enumSource.contains("for (NegativeIdEnum e : values())"),
+            assertTrue(
+                    enumSource.contains("for (NegativeIdEnum e : values())"),
                     "Should use linear search for negative ID ranges");
         }
     }
@@ -207,7 +217,8 @@ class EnumLookupTest {
             String enumSource = findEnumSource(files, "DocumentedEnum");
 
             assertNotNull(enumSource);
-            assertTrue(enumSource.contains("O(1) array lookup"),
+            assertTrue(
+                    enumSource.contains("O(1) array lookup"),
                     "Should document O(1) lookup capability");
         }
 
@@ -221,11 +232,10 @@ class EnumLookupTest {
             String enumSource = findEnumSource(files, "MethodDocEnum");
 
             assertNotNull(enumSource);
-            assertTrue(enumSource.contains("@param id"),
-                    "Should document id parameter");
-            assertTrue(enumSource.contains("@return"),
-                    "Should document return value");
-            assertTrue(enumSource.contains("@throws IllegalArgumentException"),
+            assertTrue(enumSource.contains("@param id"), "Should document id parameter");
+            assertTrue(enumSource.contains("@return"), "Should document return value");
+            assertTrue(
+                    enumSource.contains("@throws IllegalArgumentException"),
                     "Should document exception");
         }
     }
@@ -244,9 +254,11 @@ class EnumLookupTest {
             String enumSource = findEnumSource(files, "ErrorEnum");
 
             assertNotNull(enumSource);
-            assertTrue(enumSource.contains("throw new IllegalArgumentException"),
+            assertTrue(
+                    enumSource.contains("throw new IllegalArgumentException"),
                     "fromId should throw IllegalArgumentException for unknown ids");
-            assertTrue(enumSource.contains("Unknown enum id"),
+            assertTrue(
+                    enumSource.contains("Unknown enum id"),
                     "Exception message should mention unknown enum id");
         }
 
@@ -260,7 +272,8 @@ class EnumLookupTest {
             String enumSource = findEnumSource(files, "SparseCheckEnum");
 
             assertNotNull(enumSource);
-            assertTrue(enumSource.contains("if (result == null)"),
+            assertTrue(
+                    enumSource.contains("if (result == null)"),
                     "Should check for null result in sparse array");
         }
     }
@@ -279,10 +292,10 @@ class EnumLookupTest {
             String enumSource = findEnumSource(files, "IdAccessorEnum");
 
             assertNotNull(enumSource);
-            assertTrue(enumSource.contains("public int id()"),
-                    "Should generate public id() accessor");
-            assertTrue(enumSource.contains("wire-format integer ID"),
-                    "Should document id() method");
+            assertTrue(
+                    enumSource.contains("public int id()"), "Should generate public id() accessor");
+            assertTrue(
+                    enumSource.contains("wire-format integer ID"), "Should document id() method");
         }
     }
 }

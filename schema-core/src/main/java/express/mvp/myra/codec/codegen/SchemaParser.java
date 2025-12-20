@@ -10,6 +10,17 @@ public class SchemaParser {
 
     public SchemaDefinition parse(Path schemaPath) throws IOException {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-        return mapper.readValue(schemaPath.toFile(), SchemaDefinition.class);
+
+        SchemaDefinition parsed = mapper.readValue(schemaPath.toFile(), SchemaDefinition.class);
+
+        java.util.List<express.mvp.myra.codec.schema.MessageDefinition> parsedMessages =
+                parsed.messages();
+        java.util.List<express.mvp.myra.codec.schema.EnumDefinition> parsedEnums = parsed.enums();
+        java.util.List<express.mvp.myra.codec.schema.MessageDefinition> messages =
+                (parsedMessages == null) ? java.util.List.of() : parsedMessages;
+        java.util.List<express.mvp.myra.codec.schema.EnumDefinition> enums =
+                (parsedEnums == null) ? java.util.List.of() : parsedEnums;
+
+        return new SchemaDefinition(parsed.namespace(), parsed.version(), messages, enums);
     }
 }

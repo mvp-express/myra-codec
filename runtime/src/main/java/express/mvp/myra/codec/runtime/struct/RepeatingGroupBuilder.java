@@ -11,17 +11,19 @@ import java.util.Objects;
  * A builder for writing repeating groups of fixed-size primitive elements.
  *
  * <p><b>Wire Format (Inline Encoding):</b>
+ *
  * <pre>
  * [count:int32][element0][element1]...[elementN-1]
  * </pre>
  *
- * <p>This builder writes elements directly to a pre-allocated memory segment.
- * The count is written first as a placeholder, then elements are appended,
- * and finally the count is updated with the actual number of elements written.
+ * <p>This builder writes elements directly to a pre-allocated memory segment. The count is written
+ * first as a placeholder, then elements are appended, and finally the count is updated with the
+ * actual number of elements written.
  *
  * <p><b>Thread Safety:</b> This class is NOT thread-safe.
  *
  * <p><b>Example Usage:</b>
+ *
  * <pre>{@code
  * RepeatingGroupBuilder builder = new RepeatingGroupBuilder(8); // 8 bytes per long
  * builder.wrap(segment, offset);
@@ -56,11 +58,11 @@ public final class RepeatingGroupBuilder {
     }
 
     /**
-     * Wraps this builder around a memory segment at the specified offset.
-     * Resets the element count to zero.
+     * Wraps this builder around a memory segment at the specified offset. Resets the element count
+     * to zero.
      *
      * @param segment the memory segment to write to
-     * @param offset  the offset within the segment where the group starts
+     * @param offset the offset within the segment where the group starts
      * @throws NullPointerException if segment is null
      */
     public void wrap(@NonNull MemorySegment segment, long offset) {
@@ -98,8 +100,7 @@ public final class RepeatingGroupBuilder {
     }
 
     /**
-     * Returns the total bytes that will be written when finished
-     * (count field + all elements).
+     * Returns the total bytes that will be written when finished (count field + all elements).
      *
      * @return total byte size = COUNT_SIZE + (count * elementSize)
      */
@@ -233,8 +234,8 @@ public final class RepeatingGroupBuilder {
     // =========================================================================
 
     /**
-     * Finishes writing the repeating group by updating the count field.
-     * Must be called after all elements have been added.
+     * Finishes writing the repeating group by updating the count field. Must be called after all
+     * elements have been added.
      *
      * @return the total number of bytes written (count + elements)
      */
@@ -244,9 +245,7 @@ public final class RepeatingGroupBuilder {
         return currentByteSize();
     }
 
-    /**
-     * Resets this builder, releasing the reference to the segment.
-     */
+    /** Resets this builder, releasing the reference to the segment. */
     public void reset() {
         this.segment = null;
         this.baseOffset = 0;

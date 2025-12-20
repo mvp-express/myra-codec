@@ -48,6 +48,24 @@ class SchemaParserTest {
     }
 
     @Test
+    void parse_WithMissingEnums_ShouldReturnEmptyEnumList() throws Exception {
+        // Validate parser normalization when enums are omitted from the YAML
+        URL resource = getClass().getClassLoader().getResource("no_enums.myra.yml");
+        assertNotNull(resource, "Test schema file 'no_enums.myra.yml' not found in resources.");
+        Path schemaPath = Paths.get(resource.toURI());
+
+        SchemaParser parser = new SchemaParser();
+        SchemaDefinition schema = parser.parse(schemaPath);
+
+        assertNotNull(schema);
+        assertEquals("express.mvp.examples.echo", schema.namespace());
+        assertEquals("1.0.0", schema.version());
+        assertEquals(1, schema.messages().size());
+        assertNotNull(schema.enums());
+        assertEquals(0, schema.enums().size());
+    }
+
+    @Test
     void parse_OrderBookSchema_ShouldHandleRepeatedCollections() throws Exception {
         URL resource = getClass().getClassLoader().getResource("order_book.myra.yml");
         assertNotNull(resource, "Test schema file 'order_book.myra.yml' not found in resources.");

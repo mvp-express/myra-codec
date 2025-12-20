@@ -8,19 +8,22 @@ import java.lang.foreign.MemorySegment;
  * pool when used in a try-with-resources block.
  *
  * <h2>Thread Safety</h2>
- * <p><b>This class is NOT thread-safe for concurrent access to the same instance.</b> Once
- * created, a {@code PooledSegment} should be owned by a single thread until it is closed.
+ *
+ * <p><b>This class is NOT thread-safe for concurrent access to the same instance.</b> Once created,
+ * a {@code PooledSegment} should be owned by a single thread until it is closed.
  *
  * <p>However, the class is safe to:
+ *
  * <ul>
- *   <li>Create in one thread and transfer ownership to another (before any access)</li>
- *   <li>Close from a different thread than where it was created (single close only)</li>
+ *   <li>Create in one thread and transfer ownership to another (before any access)
+ *   <li>Close from a different thread than where it was created (single close only)
  * </ul>
  *
- * <p><b>Important:</b> Do not access the underlying segment after calling {@link #close()}.
- * The segment is returned to the pool and may be reused by other code.
+ * <p><b>Important:</b> Do not access the underlying segment after calling {@link #close()}. The
+ * segment is returned to the pool and may be reused by other code.
  *
  * <p><b>Example usage:</b>
+ *
  * <pre>{@code
  * try (PooledSegment pooled = new PooledSegment(encoder.acquire(1024), pool)) {
  *     MemorySegment segment = pooled.segment();
@@ -29,6 +32,7 @@ import java.lang.foreign.MemorySegment;
  * }</pre>
  */
 public final class PooledSegment implements AutoCloseable {
+    // TODO: remove this class from myra codec runtime since it's available in roray ffm utils
     private final MemorySegment segment;
     private final MemorySegmentPool pool;
 

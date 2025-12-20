@@ -11,6 +11,7 @@ import java.lang.foreign.MemorySegment;
  * fixed-structure component of the MyraCodec runtime.
  *
  * <h2>Wire Format</h2>
+ *
  * <pre>
  * +-------------+-------------+----------------+-------+----------+----------+
  * | Frame Length| Template ID | Schema Version | Flags | Reserved | Checksum |
@@ -19,14 +20,16 @@ import java.lang.foreign.MemorySegment;
  * </pre>
  *
  * <h2>Thread Safety</h2>
- * <p><b>This class is NOT thread-safe.</b> Each thread should use its own {@code MessageHeader}
- * instance. The flyweight pattern is designed for single-threaded access with instance reuse
- * via {@link #wrap(MemorySegment, long)}.
  *
- * <p>The underlying {@code MemorySegment} may be shared, but concurrent access to the same
- * memory region requires external synchronization.
+ * <p><b>This class is NOT thread-safe.</b> Each thread should use its own {@code MessageHeader}
+ * instance. The flyweight pattern is designed for single-threaded access with instance reuse via
+ * {@link #wrap(MemorySegment, long)}.
+ *
+ * <p>The underlying {@code MemorySegment} may be shared, but concurrent access to the same memory
+ * region requires external synchronization.
  *
  * <p><b>Typical usage pattern:</b>
+ *
  * <pre>{@code
  * // Reusable flyweight (per-thread)
  * MessageHeader header = new MessageHeader();

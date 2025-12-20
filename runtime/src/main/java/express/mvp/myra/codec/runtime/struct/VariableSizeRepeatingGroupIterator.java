@@ -14,17 +14,19 @@ import java.util.function.Consumer;
  * A zero-allocation iterator for repeating groups of variable-size elements.
  *
  * <p><b>Wire Format (Offset Table Encoding):</b>
+ *
  * <pre>
  * [count:int32][offset0:int32][offset1:int32]...[offsetN-1:int32][element0_data][element1_data]...
  * </pre>
  *
- * <p>Each offset is relative to the start of the element data region (after the offset table).
- * This enables O(1) random access to any element regardless of its size.
+ * <p>Each offset is relative to the start of the element data region (after the offset table). This
+ * enables O(1) random access to any element regardless of its size.
  *
- * <p><b>Thread Safety:</b> This class is NOT thread-safe. Each thread should use
- * its own iterator instance. The iterator can be reused by calling {@link #wrap}.
+ * <p><b>Thread Safety:</b> This class is NOT thread-safe. Each thread should use its own iterator
+ * instance. The iterator can be reused by calling {@link #wrap}.
  *
  * <p><b>Example Usage with Strings:</b>
+ *
  * <pre>{@code
  * VariableSizeRepeatingGroupIterator iter = new VariableSizeRepeatingGroupIterator();
  * iter.wrap(segment, offset);
@@ -37,6 +39,7 @@ import java.util.function.Consumer;
  * }</pre>
  *
  * <p><b>Example Usage with Nested Messages:</b>
+ *
  * <pre>{@code
  * VariableSizeRepeatingGroupIterator iter = new VariableSizeRepeatingGroupIterator();
  * iter.wrap(segment, offset);
@@ -63,9 +66,7 @@ public final class VariableSizeRepeatingGroupIterator {
     private long dataRegionStart;
     private int count;
 
-    /**
-     * Creates a new iterator for variable-size elements.
-     */
+    /** Creates a new iterator for variable-size elements. */
     public VariableSizeRepeatingGroupIterator() {
         // Default constructor
     }
@@ -74,7 +75,7 @@ public final class VariableSizeRepeatingGroupIterator {
      * Wraps this iterator around a memory segment at the specified offset.
      *
      * @param segment the memory segment containing the repeating group data
-     * @param offset  the offset within the segment where the group starts
+     * @param offset the offset within the segment where the group starts
      * @throws NullPointerException if segment is null
      */
     public void wrap(@NonNull MemorySegment segment, long offset) {
@@ -104,8 +105,8 @@ public final class VariableSizeRepeatingGroupIterator {
     }
 
     /**
-     * Returns the total size of this repeating group header in bytes
-     * (count + offset table). Does not include element data.
+     * Returns the total size of this repeating group header in bytes (count + offset table). Does
+     * not include element data.
      *
      * @return header byte size = COUNT_SIZE + (count * OFFSET_ENTRY_SIZE)
      */
@@ -127,8 +128,8 @@ public final class VariableSizeRepeatingGroupIterator {
     }
 
     /**
-     * Gets the offset entry for an element at the given index.
-     * The offset is relative to the data region start.
+     * Gets the offset entry for an element at the given index. The offset is relative to the data
+     * region start.
      *
      * @param index the element index (0-based)
      * @return the relative offset within the data region
@@ -138,9 +139,8 @@ public final class VariableSizeRepeatingGroupIterator {
     }
 
     /**
-     * Gets the length of an element at the given index.
-     * Calculated as the difference between consecutive offsets,
-     * or the remaining data size for the last element.
+     * Gets the length of an element at the given index. Calculated as the difference between
+     * consecutive offsets, or the remaining data size for the last element.
      *
      * @param index the element index (0-based)
      * @return the length in bytes of the element
@@ -180,13 +180,13 @@ public final class VariableSizeRepeatingGroupIterator {
     // =========================================================================
 
     /**
-     * Reads a string element at the specified index into the provided Utf8View.
-     * The view is wrapped around the string data for zero-copy access.
+     * Reads a string element at the specified index into the provided Utf8View. The view is wrapped
+     * around the string data for zero-copy access.
      *
      * <p><b>Element Format:</b> [length:int32][utf8_bytes]
      *
      * @param index the element index (0-based)
-     * @param view  the Utf8View to wrap around the string data
+     * @param view the Utf8View to wrap around the string data
      * @throws IndexOutOfBoundsException if index is out of range
      */
     public void getStringAt(int index, Utf8View view) {
@@ -197,8 +197,8 @@ public final class VariableSizeRepeatingGroupIterator {
     }
 
     /**
-     * Iterates over all string elements, invoking the consumer for each.
-     * The same Utf8View instance is reused for each element.
+     * Iterates over all string elements, invoking the consumer for each. The same Utf8View instance
+     * is reused for each element.
      *
      * @param consumer the consumer to receive each string view
      */
@@ -215,15 +215,15 @@ public final class VariableSizeRepeatingGroupIterator {
     // =========================================================================
 
     /**
-     * Wraps a flyweight accessor at the element position for the given index.
-     * This enables zero-copy access to nested message fields.
+     * Wraps a flyweight accessor at the element position for the given index. This enables
+     * zero-copy access to nested message fields.
      *
-     * <p><b>Element Format:</b> Directly encoded message bytes (no length prefix
-     * at element level - length is in the offset table).
+     * <p><b>Element Format:</b> Directly encoded message bytes (no length prefix at element level -
+     * length is in the offset table).
      *
-     * @param index     the element index (0-based)
+     * @param index the element index (0-based)
      * @param flyweight the flyweight to wrap at the element position
-     * @param <T>       the flyweight type
+     * @param <T> the flyweight type
      * @return the same flyweight instance, now wrapped at the element position
      * @throws IndexOutOfBoundsException if index is out of range
      */
@@ -235,12 +235,12 @@ public final class VariableSizeRepeatingGroupIterator {
     }
 
     /**
-     * Iterates over all nested message elements, invoking the consumer for each.
-     * The same flyweight instance is reused and re-wrapped for each element.
+     * Iterates over all nested message elements, invoking the consumer for each. The same flyweight
+     * instance is reused and re-wrapped for each element.
      *
      * @param flyweight the flyweight to reuse for each element
-     * @param consumer  the consumer to receive each wrapped flyweight
-     * @param <T>       the flyweight type
+     * @param consumer the consumer to receive each wrapped flyweight
+     * @param <T> the flyweight type
      */
     public <T extends FlyweightAccessor> void forEach(T flyweight, Consumer<T> consumer) {
         for (int i = 0; i < count; i++) {
@@ -287,9 +287,7 @@ public final class VariableSizeRepeatingGroupIterator {
         return dataRegionStart;
     }
 
-    /**
-     * Resets this iterator, releasing the reference to the segment.
-     */
+    /** Resets this iterator, releasing the reference to the segment. */
     public void reset() {
         this.segment = null;
         this.baseOffset = 0;

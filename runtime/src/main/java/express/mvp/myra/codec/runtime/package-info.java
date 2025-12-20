@@ -54,6 +54,7 @@
  * <h2>Recommended Patterns</h2>
  *
  * <h3>High-Throughput Encoding (Multiple Threads)</h3>
+ *
  * <pre>{@code
  * // Shared across all threads (thread-safe pool)
  * MemorySegmentPool pool = new LockFreeBufferPool(64 * 1024, 16);
@@ -70,6 +71,7 @@
  * }</pre>
  *
  * <h3>Decoding with Flyweight Reuse</h3>
+ *
  * <pre>{@code
  * // Per-thread flyweights
  * MessageHeader header = new MessageHeader();
@@ -85,10 +87,12 @@
  * }</pre>
  *
  * <h3>Generated Builders and Flyweights</h3>
+ *
  * <p>All generated message flyweights and builders follow the same thread safety rules:
+ *
  * <ul>
- *   <li><b>Flyweights:</b> Not thread-safe, reuse via {@code wrap()}, zero allocation</li>
- *   <li><b>Builders:</b> Not thread-safe, use one per encoding operation</li>
+ *   <li><b>Flyweights:</b> Not thread-safe, reuse via {@code wrap()}, zero allocation
+ *   <li><b>Builders:</b> Not thread-safe, use one per encoding operation
  * </ul>
  *
  * @see express.mvp.myra.codec.runtime.MessageEncoder
