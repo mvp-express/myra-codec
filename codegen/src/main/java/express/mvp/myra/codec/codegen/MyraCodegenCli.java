@@ -37,7 +37,7 @@ public class MyraCodegenCli implements Callable<Integer> {
 
     @Override
     public Integer call() {
-        System.out.println("Starting MyraCodec code generation...");
+        System.out.println("Starting MYRA Codec code generation...");
         System.out.println("  Schema: " + schemaFile.getAbsolutePath());
         System.out.println("  Output Dir: " + outputDir.getAbsolutePath());
         System.out.println("  Lock File: " + lockFile.getAbsolutePath());
