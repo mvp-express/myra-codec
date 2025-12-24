@@ -11,9 +11,9 @@ import express.mvp.myra.codec.runtime.struct.VariableSizeRepeatingGroupBuilder;
 import express.mvp.myra.codec.runtime.struct.VariableSizeRepeatingGroupIterator;
 import express.mvp.myra.codec.schema.EnumValueDefinition;
 import express.mvp.myra.codec.schema.SchemaVersion;
-import express.mvp.roray.utils.memory.*;
-import express.mvp.roray.utils.memory.BitSetView;
-import express.mvp.roray.utils.memory.Layouts;
+import express.mvp.roray.ffm.utils.memory.*;
+import express.mvp.roray.ffm.utils.memory.BitSetView;
+import express.mvp.roray.ffm.utils.memory.Layouts;
 import java.io.IOException;
 import java.lang.foreign.MemorySegment;
 import java.nio.file.Path;
@@ -414,12 +414,12 @@ public final class StubGenerator {
         ClassName messageHeaderClass =
                 ClassName.get("express.mvp.myra.codec.runtime.struct", "MessageHeader");
         ClassName varFieldWriterClass =
-                ClassName.get("express.mvp.roray.utils.memory", "VarFieldWriter");
-        ClassName layoutsClass = ClassName.get("express.mvp.roray.utils.memory", "Layouts");
+                ClassName.get("express.mvp.roray.ffm.utils.memory", "VarFieldWriter");
+        ClassName layoutsClass = ClassName.get("express.mvp.roray.ffm.utils.memory", "Layouts");
         ClassName objectsClass = ClassName.get("java.util", "Objects");
         ClassName nestedHandleClass =
                 ClassName.get(
-                        "express.mvp.roray.utils.memory", "VarFieldWriter", "NestedFieldHandle");
+                        "express.mvp.roray.ffm.utils.memory", "VarFieldWriter", "NestedFieldHandle");
 
         List<ResolvedFieldDefinition> fields = message.fields();
         int totalFields = fields.size();

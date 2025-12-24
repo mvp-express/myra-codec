@@ -1,10 +1,10 @@
 package express.mvp.myra.codec.runtime.struct;
 
-import static express.mvp.roray.utils.memory.Layouts.*;
+import static express.mvp.roray.ffm.utils.memory.Layouts.*;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import express.mvp.roray.utils.memory.FlyweightAccessor;
+import express.mvp.roray.ffm.utils.memory.FlyweightAccessor;
 import java.lang.foreign.MemorySegment;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;

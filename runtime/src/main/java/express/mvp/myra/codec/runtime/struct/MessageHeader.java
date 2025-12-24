@@ -1,9 +1,9 @@
 package express.mvp.myra.codec.runtime.struct;
 
-import static express.mvp.roray.utils.memory.Layouts.*;
+import static express.mvp.roray.ffm.utils.memory.Layouts.*;
 
-import express.mvp.roray.utils.memory.BinaryWriter;
-import express.mvp.roray.utils.memory.FlyweightAccessor;
+import express.mvp.roray.ffm.utils.memory.BinaryWriter;
+import express.mvp.roray.ffm.utils.memory.FlyweightAccessor;
 import java.lang.foreign.MemorySegment;
 
 /**

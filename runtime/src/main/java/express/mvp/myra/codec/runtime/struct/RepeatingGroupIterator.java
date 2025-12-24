@@ -1,6 +1,6 @@
 package express.mvp.myra.codec.runtime.struct;
 
-import static express.mvp.roray.utils.memory.Layouts.*;
+import static express.mvp.roray.ffm.utils.memory.Layouts.*;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;

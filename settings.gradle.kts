@@ -16,13 +16,3 @@ include("schema-core")
 include("runtime")
 include("codegen")
 include("benchmarks")
-
-val rorayUtilsDir = file("../roray-ffm-utils")
-if (rorayUtilsDir.exists()) {
-    includeBuild(rorayUtilsDir) {
-        dependencySubstitution {
-            substitute(module("express.mvp.roray.utils.memory:roray-ffm-utils"))
-                .using(project(":lib"))
-        }
-    }
-}

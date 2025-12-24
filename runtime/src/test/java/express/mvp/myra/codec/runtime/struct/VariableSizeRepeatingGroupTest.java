@@ -2,7 +2,7 @@ package express.mvp.myra.codec.runtime.struct;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import express.mvp.roray.utils.memory.Utf8View;
+import express.mvp.roray.ffm.utils.memory.Utf8View;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import org.junit.jupiter.api.DisplayName;
