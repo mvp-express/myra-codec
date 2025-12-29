@@ -288,21 +288,23 @@ class SchemaResolverTest {
         assertEquals(0, result.resolvedSchema().enums().size());
     }
 
-        @Test
-        void resolve_ShouldRejectMismatchedLockNamespace() {
-                SchemaDefinition schema = new SchemaDefinition("com.test", "1.0.0", List.of(), List.of());
+    @Test
+    void resolve_ShouldRejectMismatchedLockNamespace() {
+        SchemaDefinition schema = new SchemaDefinition("com.test", "1.0.0", List.of(), List.of());
 
-                LockFile existingLock = LockFile.empty();
-                existingLock.messages = Map.of();
-                existingLock.schemaInfo = Map.of("namespace", "other.namespace", "version", "1.0.0");
+        LockFile existingLock = LockFile.empty();
+        existingLock.messages = Map.of();
+        existingLock.schemaInfo = Map.of("namespace", "other.namespace", "version", "1.0.0");
 
-                IllegalStateException ex =
-                                assertThrows(
-                                                IllegalStateException.class,
-                                                () -> SchemaResolver.resolve(schema, existingLock, tempDir.resolve("test.myra.yml")));
+        IllegalStateException ex =
+                assertThrows(
+                        IllegalStateException.class,
+                        () ->
+                                SchemaResolver.resolve(
+                                        schema, existingLock, tempDir.resolve("test.myra.yml")));
 
-                assertTrue(ex.getMessage().contains("Lock file schema namespace"));
-        }
+        assertTrue(ex.getMessage().contains("Lock file schema namespace"));
+    }
 
     private SchemaDefinition createTestSchema() {
         return new SchemaDefinition(

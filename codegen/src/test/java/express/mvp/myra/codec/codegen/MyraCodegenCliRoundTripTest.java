@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import express.mvp.myra.codec.codegen.resolver.LockFile;
 import express.mvp.myra.codec.runtime.MessageEncoder;
-import express.mvp.myra.codec.runtime.PooledSegment;
+import express.mvp.roray.ffm.utils.memory.PooledSegment;
 import express.mvp.myra.codec.runtime.struct.MessageHeader;
 import express.mvp.roray.ffm.utils.memory.MemorySegmentPool;
 import express.mvp.roray.ffm.utils.memory.Utf8View;
@@ -17,8 +17,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.tools.Diagnostic;
@@ -126,25 +126,33 @@ class MyraCodegenCliRoundTripTest {
         }
     }
 
-        @Test
-        void cliFailsFastWhenLockNamespaceMismatches(@TempDir Path tempDir) throws Exception {
-                Path schemaPath = Path.of("src", "test", "resources", "kvstore.myra.yml").toAbsolutePath();
-                Path generatedSources = Files.createDirectories(tempDir.resolve("generated-src"));
-                Path lockFilePath = tempDir.resolve("kvstore.mismatch.lock");
+    @Test
+    void cliFailsFastWhenLockNamespaceMismatches(@TempDir Path tempDir) throws Exception {
+        Path schemaPath = Path.of("src", "test", "resources", "kvstore.myra.yml").toAbsolutePath();
+        Path generatedSources = Files.createDirectories(tempDir.resolve("generated-src"));
+        Path lockFilePath = tempDir.resolve("kvstore.mismatch.lock");
 
-                LockFile wrong = LockFile.empty();
-                wrong.schemaInfo = Map.of("namespace", "com.example.other", "version", "1.0.0", "sourceFile", "kvstore.myra.yml");
-                LockFileManager.save(wrong, lockFilePath);
+        LockFile wrong = LockFile.empty();
+        wrong.schemaInfo =
+                Map.of(
+                        "namespace",
+                        "com.example.other",
+                        "version",
+                        "1.0.0",
+                        "sourceFile",
+                        "kvstore.myra.yml");
+        LockFileManager.save(wrong, lockFilePath);
 
-                int exitCode =
-                                new CommandLine(new MyraCodegenCli())
-                                                .execute(
-                                                                "-s", schemaPath.toString(),
-                                                                "-o", generatedSources.toString(),
-                                                                "-l", lockFilePath.toString());
+        int exitCode =
+                new CommandLine(new MyraCodegenCli())
+                        .execute(
+                                "-s", schemaPath.toString(),
+                                "-o", generatedSources.toString(),
+                                "-l", lockFilePath.toString());
 
-                assertEquals(2, exitCode, "CLI should fail fast with namespace mismatch and return exit code 2");
-        }
+        assertEquals(
+                2, exitCode, "CLI should fail fast with namespace mismatch and return exit code 2");
+    }
 
     private static Path compileGeneratedSources(Path outputDir) throws IOException {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();

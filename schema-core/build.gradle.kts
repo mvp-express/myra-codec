@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "express.mvp.myra.codec"
-version = "0.1.0-SNAPSHOT"
+version = "0.1.0"
 
 repositories {
     mavenCentral()
@@ -54,7 +54,7 @@ tasks.withType<Checkstyle>().configureEach {
 
 // SpotBugs configuration
 // NOTE: SpotBugs is disabled because it does not yet support Java 25 class files (version 69).
-// Re-enable when SpotBugs adds support for Java 25+.
+// Will re-enable when SpotBugs adds support for Java 25+.
 spotbugs {
     ignoreFailures.set(true)  // Disabled until Java 25 support is added
     showStackTraces.set(true)

@@ -25,7 +25,8 @@ class LockFileManagerTest {
         Path lockPath = tempDir.resolve("test.myra.lock");
 
         LockFile original = LockFile.empty();
-        original.schemaInfo = Map.of("namespace", "com.test", "version", "1.0.0", "sourceFile", "test.myra.yml");
+        original.schemaInfo =
+                Map.of("namespace", "com.test", "version", "1.0.0", "sourceFile", "test.myra.yml");
 
         LockFile.MessageLock msgLock = new LockFile.MessageLock();
         msgLock.id = 1;

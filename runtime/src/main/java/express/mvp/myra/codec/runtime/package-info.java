@@ -20,7 +20,7 @@
  *     <td>Use one per thread (or ThreadLocal).</td>
  *   </tr>
  *   <tr>
- *     <td>{@link express.mvp.myra.codec.runtime.PooledSegment}</td>
+ *     <td>{@link express.mvp.roray.ffm.utils.memory.PooledSegment}</td>
  *     <td>❌ No</td>
  *     <td>Single-owner until closed.</td>
  *   </tr>

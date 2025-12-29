@@ -6,17 +6,14 @@ plugins {
 }
 
 group = "express.mvp.myra.codec"
-version = "0.1.0-SNAPSHOT"
+version = "0.1.0"
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    // The runtime module has minimal dependencies - only roray-ffm-utils
     api(libs.roray.ffm.utils)
-
-    // SpotBugs annotations for null-safety and thread-safety documentation
     compileOnly(libs.spotbugs.annotations)
 }
 

@@ -261,7 +261,7 @@ public class MyraOrderBookBenchmark {
         if (header.getTemplateId() != ORDER_BOOK_TEMPLATE_ID) {
             throw new IllegalStateException("Unexpected template id: " + header.getTemplateId());
         }
-        reader.position(MessageHeader.HEADER_SIZE);
+        reader.setPosition(MessageHeader.HEADER_SIZE);
 
         long checksum = 0;
         checksum += readUtf8();

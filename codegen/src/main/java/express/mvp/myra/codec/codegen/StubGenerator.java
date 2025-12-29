@@ -5,10 +5,6 @@ import express.mvp.myra.codec.codegen.resolver.ResolvedEnumDefinition;
 import express.mvp.myra.codec.codegen.resolver.ResolvedFieldDefinition;
 import express.mvp.myra.codec.codegen.resolver.ResolvedMessageDefinition;
 import express.mvp.myra.codec.codegen.resolver.ResolvedSchemaDefinition;
-import express.mvp.myra.codec.runtime.struct.RepeatingGroupBuilder;
-import express.mvp.myra.codec.runtime.struct.RepeatingGroupIterator;
-import express.mvp.myra.codec.runtime.struct.VariableSizeRepeatingGroupBuilder;
-import express.mvp.myra.codec.runtime.struct.VariableSizeRepeatingGroupIterator;
 import express.mvp.myra.codec.schema.EnumValueDefinition;
 import express.mvp.myra.codec.schema.SchemaVersion;
 import express.mvp.roray.ffm.utils.memory.*;
@@ -29,6 +25,17 @@ import javax.lang.model.element.Modifier;
 
 /** Generates Java source files from a resolved schema definition. */
 public final class StubGenerator {
+
+    private static final ClassName REPEATING_GROUP_BUILDER =
+            ClassName.get("express.mvp.myra.codec.runtime.struct", "RepeatingGroupBuilder");
+    private static final ClassName REPEATING_GROUP_ITERATOR =
+            ClassName.get("express.mvp.myra.codec.runtime.struct", "RepeatingGroupIterator");
+    private static final ClassName VARIABLE_SIZE_REPEATING_GROUP_BUILDER =
+            ClassName.get(
+                    "express.mvp.myra.codec.runtime.struct", "VariableSizeRepeatingGroupBuilder");
+    private static final ClassName VARIABLE_SIZE_REPEATING_GROUP_ITERATOR =
+            ClassName.get(
+                    "express.mvp.myra.codec.runtime.struct", "VariableSizeRepeatingGroupIterator");
 
     private final ResolvedSchemaDefinition schema;
     private final String flyweightSuffix = "Flyweight";
@@ -156,24 +163,23 @@ public final class StubGenerator {
                     int elementSize = getRepeatedElementSize(field);
                     viewFields.add(
                             FieldSpec.builder(
-                                            RepeatingGroupIterator.class,
+                                            REPEATING_GROUP_ITERATOR,
                                             field.name() + "Iterator",
                                             Modifier.PRIVATE,
                                             Modifier.FINAL)
                                     .initializer(
-                                            "new $T($L)", RepeatingGroupIterator.class, elementSize)
+                                            "new $T($L)", REPEATING_GROUP_ITERATOR, elementSize)
                                     .build());
                 } else {
                     // Variable-size elements (strings, messages, bytes) use
                     // VariableSizeRepeatingGroupIterator
                     viewFields.add(
                             FieldSpec.builder(
-                                            VariableSizeRepeatingGroupIterator.class,
+                                            VARIABLE_SIZE_REPEATING_GROUP_ITERATOR,
                                             field.name() + "Iterator",
                                             Modifier.PRIVATE,
                                             Modifier.FINAL)
-                                    .initializer(
-                                            "new $T()", VariableSizeRepeatingGroupIterator.class)
+                                    .initializer("new $T()", VARIABLE_SIZE_REPEATING_GROUP_ITERATOR)
                                     .build());
                     // Also add a flyweight view for nested messages
                     if (isMessageType(field)) {
@@ -410,7 +416,7 @@ public final class StubGenerator {
                 ClassName.get(schema.namespace(), message.name() + flyweightSuffix);
         ClassName encoderClass = ClassName.get("express.mvp.myra.codec.runtime", "MessageEncoder");
         ClassName pooledSegmentClass =
-                ClassName.get("express.mvp.myra.codec.runtime", "PooledSegment");
+                ClassName.get("express.mvp.roray.ffm.utils.memory", "PooledSegment");
         ClassName messageHeaderClass =
                 ClassName.get("express.mvp.myra.codec.runtime.struct", "MessageHeader");
         ClassName varFieldWriterClass =
@@ -419,7 +425,9 @@ public final class StubGenerator {
         ClassName objectsClass = ClassName.get("java.util", "Objects");
         ClassName nestedHandleClass =
                 ClassName.get(
-                        "express.mvp.roray.ffm.utils.memory", "VarFieldWriter", "NestedFieldHandle");
+                        "express.mvp.roray.ffm.utils.memory",
+                        "VarFieldWriter",
+                        "NestedFieldHandle");
 
         List<ResolvedFieldDefinition> fields = message.fields();
         int totalFields = fields.size();
@@ -1526,8 +1534,8 @@ public final class StubGenerator {
                     .addStatement("long absoluteOffset = payloadBase + handle.relativeOffset()")
                     .addStatement(
                             "$T groupBuilder = new $T($L)",
-                            RepeatingGroupBuilder.class,
-                            RepeatingGroupBuilder.class,
+                            REPEATING_GROUP_BUILDER,
+                            REPEATING_GROUP_BUILDER,
                             getRepeatedElementSize(field))
                     .addStatement("groupBuilder.wrap(segment, absoluteOffset)")
                     .beginControlFlow("for ($T value : values)", elementType)
@@ -1575,8 +1583,8 @@ public final class StubGenerator {
                     .addStatement("long absoluteOffset = payloadBase + handle.relativeOffset()")
                     .addStatement(
                             "$T groupBuilder = new $T()",
-                            VariableSizeRepeatingGroupBuilder.class,
-                            VariableSizeRepeatingGroupBuilder.class)
+                            VARIABLE_SIZE_REPEATING_GROUP_BUILDER,
+                            VARIABLE_SIZE_REPEATING_GROUP_BUILDER)
                     .addStatement("groupBuilder.beginWithCount(segment, absoluteOffset, count)")
                     .beginControlFlow("for (int i = 0; i < count; i++)")
                     .addStatement("long elementStart = groupBuilder.beginElement()")
@@ -1630,8 +1638,8 @@ public final class StubGenerator {
                     .addStatement("long absoluteOffset = payloadBase + handle.relativeOffset()")
                     .addStatement(
                             "$T groupBuilder = new $T()",
-                            VariableSizeRepeatingGroupBuilder.class,
-                            VariableSizeRepeatingGroupBuilder.class)
+                            VARIABLE_SIZE_REPEATING_GROUP_BUILDER,
+                            VARIABLE_SIZE_REPEATING_GROUP_BUILDER)
                     .addStatement(
                             "groupBuilder.beginWithCount(segment, absoluteOffset, values.length)")
                     .beginControlFlow("for ($T value : values)", String.class)
@@ -1671,8 +1679,8 @@ public final class StubGenerator {
                     .addStatement("long absoluteOffset = payloadBase + handle.relativeOffset()")
                     .addStatement(
                             "$T groupBuilder = new $T()",
-                            VariableSizeRepeatingGroupBuilder.class,
-                            VariableSizeRepeatingGroupBuilder.class)
+                            VARIABLE_SIZE_REPEATING_GROUP_BUILDER,
+                            VARIABLE_SIZE_REPEATING_GROUP_BUILDER)
                     .addStatement(
                             "groupBuilder.beginWithCount(segment, absoluteOffset, values.length)")
                     .beginControlFlow("for (byte[] value : values)")

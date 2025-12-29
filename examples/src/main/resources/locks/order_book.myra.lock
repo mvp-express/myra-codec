@@ -1,0 +1,39 @@
+schemaInfo:
+  sourceFile: "order_book.myra.yml"
+  namespace: "express.mvp.myra.codec.examples.generated.orderbook"
+  version: "1.0.0"
+messages:
+  Trade:
+    id: 1
+    fields:
+      aggressor: 3
+      size: 2
+      priceNanos: 1
+  OrderBookSnapshot:
+    id: 4
+    fields:
+      venue: 2
+      symbol: 3
+      sequence: 5
+      metadata: 11
+      isTrading: 6
+      instrumentId: 4
+      asks: 10
+      bids: 9
+      tradingStatus: 7
+      lastTrade: 8
+      timestamp: 1
+  MetadataEntry:
+    id: 3
+    fields:
+      value: 2
+      key: 1
+  Level:
+    id: 2
+    fields:
+      size: 2
+      priceNanos: 1
+      orderCount: 3
+      maker: 4
+enums: {}
+reservedIds: {}

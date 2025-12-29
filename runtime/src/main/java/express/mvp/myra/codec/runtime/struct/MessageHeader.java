@@ -13,10 +13,10 @@ import java.lang.foreign.MemorySegment;
  * <h2>Wire Format</h2>
  *
  * <pre>
- * +-------------+-------------+----------------+-------+----------+----------+
- * | Frame Length| Template ID | Schema Version | Flags | Reserved | Checksum |
- * |  (4 bytes)  |  (2 bytes)  |    (2 bytes)   |(1 byte)|(3 bytes)| (4 bytes)|
- * +-------------+-------------+----------------+-------+----------+----------+
+ * +-------------+-------------+----------------+---------+----------+----------+
+ * | Frame Length| Template ID | Schema Version | Flags   | Reserved | Checksum |
+ * |  (4 bytes)  |  (2 bytes)  |    (2 bytes)   |(1 byte) |(3 bytes) | (4 bytes)|
+ * +-------------+-------------+----------------+---------+----------+----------+
  * </pre>
  *
  * <h2>Thread Safety</h2>

@@ -10,12 +10,12 @@ MyraCodec is a schema-driven binary serialization library that generates zero-co
 
 ```kotlin
 plugins {
-    id("express.mvp.myra-codegen") version "0.1.0-SNAPSHOT" // Optional: Gradle plugin
+    id("express.mvp.myra-codegen") version "0.1.0" // Optional: Gradle plugin
 }
 
 dependencies {
-    implementation("express.mvp.myra:myra-codec-runtime:0.1.0-SNAPSHOT")
-    implementation("express.mvp.roray:roray-ffm-utils:0.1.0-SNAPSHOT")
+    implementation("express.mvp.myra:myra-codec-runtime:0.1.0")
+    implementation("express.mvp.roray:roray-ffm:0.1.0")
 }
 ```
 
@@ -25,12 +25,12 @@ dependencies {
 <dependency>
     <groupId>express.mvp.myra</groupId>
     <artifactId>myra-codec-runtime</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.1.0</version>
 </dependency>
 <dependency>
     <groupId>express.mvp.roray</groupId>
     <artifactId>roray-ffm-utils</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.1.0</version>
 </dependency>
 ```
 
@@ -262,7 +262,7 @@ MemorySegment encoded = pooledMsg.segment();
 transport.send(encoded);
 
 // Return to pool when done
-pooledMsg.release();
+pooledMsg.close();
 ```
 
 ### Nested Messages
@@ -402,7 +402,7 @@ PooledSegment msg = builder.build(templateId, version);
 try {
     transport.send(msg.segment()).join();
 } finally {
-    msg.release();  // Return to pool
+    msg.close();  // Return to pool
 }
 ```
 
@@ -483,7 +483,7 @@ These require a new schema version:
 // Pre-warm the pool
 for (int i = 0; i < POOL_SIZE; i++) {
     OrderBuilder b = OrderBuilder.allocate(encoder, 1024);
-    b.build(templateId, version).release();
+    b.build(templateId, version).close();
 }
 ```
 
@@ -496,7 +496,7 @@ for (Order order : orders) {
     batch.add(encodeOrder(order));
     if (batch.size() >= BATCH_SIZE) {
         transport.sendBatch(batch);
-        batch.forEach(PooledSegment::release);
+        batch.forEach(PooledSegment::close);
         batch.clear();
     }
 }
