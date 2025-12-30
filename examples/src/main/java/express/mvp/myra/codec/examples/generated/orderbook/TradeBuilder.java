@@ -1,10 +1,10 @@
 package express.mvp.myra.codec.examples.generated.orderbook;
 
 import express.mvp.myra.codec.runtime.MessageEncoder;
-import express.mvp.roray.ffm.utils.memory.PooledSegment;
 import express.mvp.myra.codec.runtime.struct.MessageHeader;
 import express.mvp.roray.ffm.utils.memory.BitSetView;
 import express.mvp.roray.ffm.utils.memory.Layouts;
+import express.mvp.roray.ffm.utils.memory.PooledSegment;
 import express.mvp.roray.ffm.utils.memory.VarFieldWriter;
 import java.lang.String;
 import java.lang.foreign.MemorySegment;
@@ -40,15 +40,15 @@ public final class TradeBuilder {
 
     private final MessageEncoder encoder;
 
-    private final MemorySegment segment;
+    private MemorySegment segment;
 
-    private final long payloadBase;
+    private long payloadBase;
 
     private final boolean inline;
 
     private final boolean[] written;
 
-    private final VarFieldWriter varWriter;
+    private VarFieldWriter varWriter;
 
     private final BitSetView presenceBits;
 
@@ -81,6 +81,26 @@ public final class TradeBuilder {
     static TradeBuilder inline(MemorySegment target) {
         Objects.requireNonNull(target, "target");
         return new TradeBuilder(null, target, true);
+    }
+
+    public void resetInline(MemorySegment target, long offset) {
+        if (!inline) {
+            throw new IllegalStateException("resetInline() is only valid for inline builders");
+        }
+        this.segment = Objects.requireNonNull(target, "target");
+        this.payloadBase = offset;
+        this.built = false;
+        this.frameLength = 0;
+        for (int i = 0; i < written.length; i++) {
+            written[i] = false;
+        }
+        MemorySegment body = segment.asSlice(this.payloadBase, segment.byteSize() - this.payloadBase);
+        this.varWriter = new VarFieldWriter(body, TradeFlyweight.BLOCK_LENGTH - (VAR_FIELD_COUNT * 8), VAR_FIELD_COUNT);
+        for (int i = 0; i < VAR_FIELD_COUNT; i++) {
+                    this.varWriter.reserveVarField();
+                };
+        this.presenceBits.wrap(segment, this.payloadBase, PRESENCE_BYTES);
+        this.presenceBits.clearAll();
     }
 
     private void ensureWritable(int fieldIndex, String fieldName) {

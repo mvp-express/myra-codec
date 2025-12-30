@@ -41,7 +41,7 @@ enums:
     type: "int8"
     values:
       - name: "VALUE_A"
-        value: 1
+        id: 1
 ```
 
 ### Complete Example

@@ -30,21 +30,21 @@ public final class OrderBookSnapshotFlyweight implements FlyweightAccessor {
 
     public static final int ISTRADING_OFFSET = 13;
 
-    public static final int TIMESTAMP_OFFSET = 14;
+    public static final int TRADINGSTATUS_OFFSET = 14;
 
-    public static final int VENUE_OFFSET = 22;
+    public static final int TIMESTAMP_OFFSET = 15;
 
-    public static final int SYMBOL_OFFSET = 30;
+    public static final int VENUE_OFFSET = 23;
 
-    public static final int TRADINGSTATUS_OFFSET = 38;
+    public static final int SYMBOL_OFFSET = 31;
 
-    public static final int LASTTRADE_OFFSET = 46;
+    public static final int LASTTRADE_OFFSET = 39;
 
-    public static final int BIDS_OFFSET = 54;
+    public static final int BIDS_OFFSET = 47;
 
-    public static final int ASKS_OFFSET = 62;
+    public static final int ASKS_OFFSET = 55;
 
-    public static final int METADATA_OFFSET = 70;
+    public static final int METADATA_OFFSET = 63;
 
     public static final int TEMPLATE_ID = 4;
 
@@ -53,7 +53,7 @@ public final class OrderBookSnapshotFlyweight implements FlyweightAccessor {
      */
     public static final short SCHEMA_VERSION = (short) 256;
 
-    public static final int BLOCK_LENGTH = 78;
+    public static final int BLOCK_LENGTH = 71;
 
     private MemorySegment segment;
 
@@ -66,8 +66,6 @@ public final class OrderBookSnapshotFlyweight implements FlyweightAccessor {
     private final Utf8View venueView = new Utf8View();
 
     private final Utf8View symbolView = new Utf8View();
-
-    private final Utf8View tradingStatusView = new Utf8View();
 
     private final TradeFlyweight lastTradeView = new TradeFlyweight();
 
@@ -140,6 +138,14 @@ public final class OrderBookSnapshotFlyweight implements FlyweightAccessor {
         segment.set(Layouts.BOOLEAN, this.offset + ISTRADING_OFFSET, value);
     }
 
+    public byte getTradingStatus() {
+        return segment.get(Layouts.BYTE, this.offset + TRADINGSTATUS_OFFSET);
+    }
+
+    public void setTradingStatus(byte value) {
+        segment.set(Layouts.BYTE, this.offset + TRADINGSTATUS_OFFSET, value);
+    }
+
     public Utf8View getTimestamp() {
         final int relativeOffset = segment.get(Layouts.INT_BE, this.offset + TIMESTAMP_OFFSET);
         final int dataLength = segment.get(Layouts.INT_BE, this.offset + TIMESTAMP_OFFSET + 4);
@@ -159,13 +165,6 @@ public final class OrderBookSnapshotFlyweight implements FlyweightAccessor {
         final int dataLength = segment.get(Layouts.INT_BE, this.offset + SYMBOL_OFFSET + 4);
         this.symbolView.wrap(this.segment, this.offset + relativeOffset, dataLength);
         return this.symbolView;
-    }
-
-    public Utf8View getTradingStatus() {
-        final int relativeOffset = segment.get(Layouts.INT_BE, this.offset + TRADINGSTATUS_OFFSET);
-        final int dataLength = segment.get(Layouts.INT_BE, this.offset + TRADINGSTATUS_OFFSET + 4);
-        this.tradingStatusView.wrap(this.segment, this.offset + relativeOffset, dataLength);
-        return this.tradingStatusView;
     }
 
     public TradeFlyweight getLastTrade() {
@@ -256,25 +255,22 @@ public final class OrderBookSnapshotFlyweight implements FlyweightAccessor {
         writer.writeIntBE(this.getInstrumentId());
         writer.writeLongBE(this.getSequence());
         writer.writeBoolean(this.getIsTrading());
-        Utf8View tradingStatusViewTmp = this.getTradingStatus();
-        byte[] tradingStatusBytesTmp = new byte[(int)tradingStatusViewTmp.byteSize()];
-        MemorySegment.copy(tradingStatusViewTmp.segment(), tradingStatusViewTmp.offset(), MemorySegment.ofArray(tradingStatusBytesTmp), 0, tradingStatusViewTmp.byteSize());
-        writer.writeBytes(tradingStatusBytesTmp);
-        final int relativeOffset = this.segment.get(Layouts.INT_BE, this.offset + LASTTRADE_OFFSET);
-        final int nestedLength = this.segment.get(Layouts.INT_BE, this.offset + LASTTRADE_OFFSET + 4);
-        writer.writeVarInt(nestedLength);
-        writer.writeSegmentRaw(this.segment, this.offset + relativeOffset, nestedLength);
-        final int relativeOffset = this.segment.get(Layouts.INT_BE, this.offset + BIDS_OFFSET);
-        final int nestedLength = this.segment.get(Layouts.INT_BE, this.offset + BIDS_OFFSET + 4);
-        writer.writeVarInt(nestedLength);
-        writer.writeSegmentRaw(this.segment, this.offset + relativeOffset, nestedLength);
-        final int relativeOffset = this.segment.get(Layouts.INT_BE, this.offset + ASKS_OFFSET);
-        final int nestedLength = this.segment.get(Layouts.INT_BE, this.offset + ASKS_OFFSET + 4);
-        writer.writeVarInt(nestedLength);
-        writer.writeSegmentRaw(this.segment, this.offset + relativeOffset, nestedLength);
-        final int relativeOffset = this.segment.get(Layouts.INT_BE, this.offset + METADATA_OFFSET);
-        final int nestedLength = this.segment.get(Layouts.INT_BE, this.offset + METADATA_OFFSET + 4);
-        writer.writeVarInt(nestedLength);
-        writer.writeSegmentRaw(this.segment, this.offset + relativeOffset, nestedLength);
+        writer.writeByte(this.getTradingStatus());
+        final int lastTradeRelativeOffset = this.segment.get(Layouts.INT_BE, this.offset + LASTTRADE_OFFSET);
+        final int lastTradeNestedLength = this.segment.get(Layouts.INT_BE, this.offset + LASTTRADE_OFFSET + 4);
+        writer.writeVarInt(lastTradeNestedLength);
+        writer.writeSegmentRaw(this.segment, this.offset + lastTradeRelativeOffset, lastTradeNestedLength);
+        final int bidsRelativeOffset = this.segment.get(Layouts.INT_BE, this.offset + BIDS_OFFSET);
+        final int bidsNestedLength = this.segment.get(Layouts.INT_BE, this.offset + BIDS_OFFSET + 4);
+        writer.writeVarInt(bidsNestedLength);
+        writer.writeSegmentRaw(this.segment, this.offset + bidsRelativeOffset, bidsNestedLength);
+        final int asksRelativeOffset = this.segment.get(Layouts.INT_BE, this.offset + ASKS_OFFSET);
+        final int asksNestedLength = this.segment.get(Layouts.INT_BE, this.offset + ASKS_OFFSET + 4);
+        writer.writeVarInt(asksNestedLength);
+        writer.writeSegmentRaw(this.segment, this.offset + asksRelativeOffset, asksNestedLength);
+        final int metadataRelativeOffset = this.segment.get(Layouts.INT_BE, this.offset + METADATA_OFFSET);
+        final int metadataNestedLength = this.segment.get(Layouts.INT_BE, this.offset + METADATA_OFFSET + 4);
+        writer.writeVarInt(metadataNestedLength);
+        writer.writeSegmentRaw(this.segment, this.offset + metadataRelativeOffset, metadataNestedLength);
     }
 }

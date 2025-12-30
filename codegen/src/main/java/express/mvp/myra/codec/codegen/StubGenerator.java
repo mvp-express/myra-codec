@@ -58,6 +58,12 @@ public final class StubGenerator {
                 generatedFiles.add(generateMessageFlyweight(message));
                 // Also emit a minimal builder skeleton to support single-pass encoding.
                 generatedFiles.add(generateMessageBuilder(message));
+                generatedFiles.add(generateWriterInterface(message));
+                generatedFiles.add(generateWriterImpl(message));
+                JavaFile arrayWriter = generateArrayWriterImpl(message);
+                if (arrayWriter != null) {
+                    generatedFiles.add(arrayWriter);
+                }
             }
         }
 
@@ -325,21 +331,24 @@ public final class StubGenerator {
 
             if (isMessageType(field)) {
                 String offsetConst = field.name().toUpperCase() + "_OFFSET";
+                String relativeOffsetVar = fieldName + "RelativeOffset";
+                String nestedLengthVar = fieldName + "NestedLength";
                 writeToMethodBuilder
                         .addStatement(
-                                "final int relativeOffset = this.segment.get($T.INT_BE, this.offset"
-                                        + " + $L)",
+                                "final int $L = this.segment.get($T.INT_BE, this.offset + $L)",
+                                relativeOffsetVar,
                                 Layouts.class,
                                 offsetConst)
                         .addStatement(
-                                "final int nestedLength = this.segment.get($T.INT_BE, this.offset +"
-                                        + " $L + 4)",
+                                "final int $L = this.segment.get($T.INT_BE, this.offset + $L + 4)",
+                                nestedLengthVar,
                                 Layouts.class,
                                 offsetConst)
-                        .addStatement("writer.writeVarInt(nestedLength)")
+                        .addStatement("writer.writeVarInt($L)", nestedLengthVar)
                         .addStatement(
-                                "writer.writeSegmentRaw(this.segment, this.offset + relativeOffset,"
-                                        + " nestedLength)");
+                                "writer.writeSegmentRaw(this.segment, this.offset + $L, $L)",
+                                relativeOffsetVar,
+                                nestedLengthVar);
                 continue;
             }
 
@@ -576,11 +585,8 @@ public final class StubGenerator {
                 FieldSpec.builder(encoderClass, "encoder", Modifier.PRIVATE, Modifier.FINAL)
                         .build());
         builder.addField(
-                FieldSpec.builder(MemorySegment.class, "segment", Modifier.PRIVATE, Modifier.FINAL)
-                        .build());
-        builder.addField(
-                FieldSpec.builder(long.class, "payloadBase", Modifier.PRIVATE, Modifier.FINAL)
-                        .build());
+                FieldSpec.builder(MemorySegment.class, "segment", Modifier.PRIVATE).build());
+        builder.addField(FieldSpec.builder(long.class, "payloadBase", Modifier.PRIVATE).build());
         builder.addField(
                 FieldSpec.builder(boolean.class, "inline", Modifier.PRIVATE, Modifier.FINAL)
                         .build());
@@ -592,15 +598,25 @@ public final class StubGenerator {
                                 Modifier.FINAL)
                         .build());
         builder.addField(
-                FieldSpec.builder(
-                                varFieldWriterClass, "varWriter", Modifier.PRIVATE, Modifier.FINAL)
-                        .build());
+                FieldSpec.builder(varFieldWriterClass, "varWriter", Modifier.PRIVATE).build());
         builder.addField(
                 FieldSpec.builder(
                                 BitSetView.class, "presenceBits", Modifier.PRIVATE, Modifier.FINAL)
                         .build());
         builder.addField(FieldSpec.builder(boolean.class, "built", Modifier.PRIVATE).build());
         builder.addField(FieldSpec.builder(long.class, "frameLength", Modifier.PRIVATE).build());
+        for (ResolvedFieldDefinition field : fields) {
+            if (isMessageType(field.type())) {
+                ClassName childBuilder =
+                        ClassName.get(schema.namespace(), field.type() + "Builder");
+                builder.addField(
+                        FieldSpec.builder(
+                                        childBuilder,
+                                        reusableBuilderFieldName(field),
+                                        Modifier.PRIVATE)
+                                .build());
+            }
+        }
 
         // Static allocator
         builder.addMethod(
@@ -622,6 +638,49 @@ public final class StubGenerator {
                         .addStatement("$T.requireNonNull(target, \"target\")", objectsClass)
                         .addStatement("return new $T(null, target, true)", builderClassName)
                         .build());
+
+        MethodSpec.Builder resetInline =
+                MethodSpec.methodBuilder("resetInline")
+                        .addModifiers(Modifier.PUBLIC)
+                        .addParameter(MemorySegment.class, "target")
+                        .addParameter(long.class, "offset")
+                        .beginControlFlow("if (!inline)")
+                        .addStatement(
+                                "throw new IllegalStateException(\"resetInline() is only valid for"
+                                        + " inline builders\")")
+                        .endControlFlow()
+                        .addStatement(
+                                "this.segment = $T.requireNonNull(target, \"target\")",
+                                objectsClass)
+                        .addStatement("this.payloadBase = offset")
+                        .addStatement("this.built = false")
+                        .addStatement("this.frameLength = 0")
+                        .beginControlFlow("for (int i = 0; i < written.length; i++)")
+                        .addStatement("written[i] = false")
+                        .endControlFlow();
+        if (varFieldCount > 0) {
+            resetInline
+                    .addStatement(
+                            "$T body = segment.asSlice(this.payloadBase, segment.byteSize() -"
+                                    + " this.payloadBase)",
+                            MemorySegment.class)
+                    .addStatement(
+                            "this.varWriter = new $T(body, $T.BLOCK_LENGTH - (VAR_FIELD_COUNT * 8),"
+                                    + " VAR_FIELD_COUNT)",
+                            varFieldWriterClass,
+                            flyweightClassName)
+                    .addStatement(
+                            "for (int i = 0; i < VAR_FIELD_COUNT; i++) {$>\n"
+                                    + "this.varWriter.reserveVarField();\n"
+                                    + "$<}");
+        }
+        if (presenceBytes > 0) {
+            resetInline
+                    .addStatement(
+                            "this.presenceBits.wrap(segment, this.payloadBase, PRESENCE_BYTES)")
+                    .addStatement("this.presenceBits.clearAll()");
+        }
+        builder.addMethod(resetInline.build());
 
         // Private constructor
         MethodSpec.Builder ctor =
@@ -789,6 +848,32 @@ public final class StubGenerator {
                             objectsClass,
                             varFieldWriterClass,
                             nestedHandleClass));
+            if (isEnum(field.type()) && !field.repeated()) {
+                builder.addMethod(
+                        createEnumBuilderSetterOverload(builderClassName, field, objectsClass));
+            }
+            if (isMessageType(field.type()) && !field.repeated()) {
+                builder.addMethod(
+                        createMessageWriterSetter(
+                                builderClassName,
+                                field,
+                                fieldIndexMap.get(field),
+                                varSlotMap.get(field),
+                                optionalBits.get(field),
+                                objectsClass,
+                                nestedHandleClass));
+            }
+            if (field.repeated() && isMessageType(field.type())) {
+                builder.addMethod(
+                        createRepeatingGroupWriterSetter(
+                                builderClassName,
+                                field,
+                                fieldIndexMap.get(field),
+                                varSlotMap.get(field),
+                                optionalBits.get(field),
+                                objectsClass,
+                                nestedHandleClass));
+            }
         }
 
         return JavaFile.builder(schema.namespace(), builder.build()).indent("    ").build();
@@ -964,6 +1049,480 @@ public final class StubGenerator {
         }
 
         return JavaFile.builder(schema.namespace(), enumBuilder.build()).indent("    ").build();
+    }
+
+    private JavaFile generateWriterInterface(ResolvedMessageDefinition message) {
+        ClassName builderClass = ClassName.get(schema.namespace(), message.name() + "Builder");
+        ClassName writerClass = ClassName.get(schema.namespace(), message.name() + "Writer");
+
+        TypeSpec.Builder writer =
+                TypeSpec.interfaceBuilder(writerClass)
+                        .addModifiers(Modifier.PUBLIC)
+                        .addJavadoc(
+                                """
+                                Auto-generated writer interface for $L.
+
+                                Provides a reusable, allocation-free way to populate a builder.
+                                """,
+                                message.name());
+
+        writer.addMethod(
+                MethodSpec.methodBuilder("writeTo")
+                        .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+                        .addParameter(builderClass, "builder")
+                        .addParameter(int.class, "index")
+                        .addJavadoc(
+                                "Writes the element at the given index into the provided builder.\n"
+                                        + "@param builder target builder\n"
+                                        + "@param index element index (0-based)\n")
+                        .build());
+
+        writer.addMethod(
+                MethodSpec.methodBuilder("writeTo")
+                        .addModifiers(Modifier.PUBLIC, Modifier.DEFAULT)
+                        .addParameter(builderClass, "builder")
+                        .addJavadoc(
+                                "Writes field values into the provided builder instance.\n"
+                                        + "@param builder target builder\n")
+                        .addStatement("writeTo(builder, 0)")
+                        .build());
+
+        return JavaFile.builder(schema.namespace(), writer.build()).indent("    ").build();
+    }
+
+    private JavaFile generateWriterImpl(ResolvedMessageDefinition message) {
+        ClassName builderClass = ClassName.get(schema.namespace(), message.name() + "Builder");
+        ClassName writerClass = ClassName.get(schema.namespace(), message.name() + "Writer");
+        ClassName writerImplClass =
+                ClassName.get(schema.namespace(), message.name() + "WriterImpl");
+        ClassName objectsClass = ClassName.get("java.util", "Objects");
+
+        TypeSpec.Builder writerImpl =
+                TypeSpec.classBuilder(writerImplClass)
+                        .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+                        .addSuperinterface(writerClass)
+                        .addJavadoc(
+                                """
+                                Auto-generated writer implementation for $L.
+
+                                Fill fields directly, then pass this instance to a builder.
+                                """,
+                                message.name());
+
+        for (ResolvedFieldDefinition field : message.fields()) {
+            String fieldName = field.name();
+            if (field.repeated()) {
+                if (isMessageType(field)) {
+                    ClassName childWriter =
+                            ClassName.get(schema.namespace(), field.type() + "Writer");
+                    writerImpl.addField(
+                            FieldSpec.builder(int.class, fieldName + "Count", Modifier.PUBLIC)
+                                    .initializer("0")
+                                    .build());
+                    writerImpl.addField(
+                            FieldSpec.builder(childWriter, fieldName + "Writer", Modifier.PUBLIC)
+                                    .build());
+                } else if (isStringType(field)) {
+                    writerImpl.addField(
+                            FieldSpec.builder(
+                                            ArrayTypeName.of(String.class),
+                                            fieldName + "Values",
+                                            Modifier.PUBLIC)
+                                    .build());
+                    writerImpl.addField(
+                            FieldSpec.builder(
+                                            MemorySegment.class,
+                                            fieldName + "Scratch",
+                                            Modifier.PUBLIC)
+                                    .build());
+                } else if (isBytesType(field)) {
+                    writerImpl.addField(
+                            FieldSpec.builder(
+                                            ArrayTypeName.of(ArrayTypeName.of(TypeName.BYTE)),
+                                            fieldName + "Values",
+                                            Modifier.PUBLIC)
+                                    .build());
+                } else {
+                    TypeName elementType = getRepeatedElementType(field);
+                    writerImpl.addField(
+                            FieldSpec.builder(
+                                            ArrayTypeName.of(elementType),
+                                            fieldName + "Values",
+                                            Modifier.PUBLIC)
+                                    .build());
+                }
+            } else if (isMessageType(field)) {
+                ClassName childWriter = ClassName.get(schema.namespace(), field.type() + "Writer");
+                writerImpl.addField(
+                        FieldSpec.builder(childWriter, fieldName + "Writer", Modifier.PUBLIC)
+                                .build());
+            } else if (isStringType(field)) {
+                writerImpl.addField(
+                        FieldSpec.builder(String.class, fieldName, Modifier.PUBLIC).build());
+                writerImpl.addField(
+                        FieldSpec.builder(
+                                        MemorySegment.class, fieldName + "Scratch", Modifier.PUBLIC)
+                                .build());
+            } else if (isBytesType(field)) {
+                writerImpl.addField(
+                        FieldSpec.builder(MemorySegment.class, fieldName, Modifier.PUBLIC).build());
+            } else if (isEnum(field.type())) {
+                ClassName enumClass = ClassName.get(schema.namespace(), field.type());
+                writerImpl.addField(
+                        FieldSpec.builder(enumClass, fieldName, Modifier.PUBLIC).build());
+            } else {
+                TypeName javaType = getJavaTypeName(field.type());
+                if (field.optional()) {
+                    writerImpl.addField(
+                            FieldSpec.builder(
+                                            boolean.class,
+                                            "has" + capitalize(fieldName),
+                                            Modifier.PUBLIC)
+                                    .initializer("false")
+                                    .build());
+                }
+                writerImpl.addField(
+                        FieldSpec.builder(javaType, fieldName, Modifier.PUBLIC).build());
+            }
+        }
+
+        MethodSpec.Builder writeTo =
+                MethodSpec.methodBuilder("writeTo")
+                        .addAnnotation(Override.class)
+                        .addModifiers(Modifier.PUBLIC)
+                        .addParameter(builderClass, "builder")
+                        .addParameter(int.class, "index")
+                        .addStatement("$T.requireNonNull(builder, \"builder\")", objectsClass);
+
+        for (ResolvedFieldDefinition field : message.fields()) {
+            String fieldName = field.name();
+            String setterName = "set" + capitalize(fieldName);
+            if (field.repeated()) {
+                if (isMessageType(field)) {
+                    String writerField = fieldName + "Writer";
+                    String countField = fieldName + "Count";
+                    writeTo.beginControlFlow("if (this.$L != null)", writerField)
+                            .addStatement(
+                                    "builder.$L(this.$L, this.$L)",
+                                    setterName,
+                                    countField,
+                                    writerField)
+                            .endControlFlow();
+                } else if (isStringType(field)) {
+                    String valuesField = fieldName + "Values";
+                    String scratchField = fieldName + "Scratch";
+                    writeTo.beginControlFlow("if (this.$L != null)", valuesField)
+                            .addStatement(
+                                    "builder.$L(this.$L, this.$L)",
+                                    setterName,
+                                    valuesField,
+                                    scratchField)
+                            .endControlFlow();
+                } else if (isBytesType(field)) {
+                    String valuesField = fieldName + "Values";
+                    writeTo.beginControlFlow("if (this.$L != null)", valuesField)
+                            .addStatement("builder.$L(this.$L)", setterName, valuesField)
+                            .endControlFlow();
+                } else {
+                    String valuesField = fieldName + "Values";
+                    writeTo.beginControlFlow("if (this.$L != null)", valuesField)
+                            .addStatement("builder.$L(this.$L)", setterName, valuesField)
+                            .endControlFlow();
+                }
+                continue;
+            }
+
+            if (isMessageType(field)) {
+                String writerField = fieldName + "Writer";
+                if (field.optional()) {
+                    writeTo.beginControlFlow("if (this.$L != null)", writerField)
+                            .addStatement("builder.$L(this.$L)", setterName, writerField)
+                            .endControlFlow();
+                } else {
+                    writeTo.addStatement("builder.$L(this.$L)", setterName, writerField);
+                }
+                continue;
+            }
+
+            if (isStringType(field)) {
+                String scratchField = fieldName + "Scratch";
+                if (field.optional()) {
+                    writeTo.beginControlFlow("if (this.$L != null)", fieldName)
+                            .addStatement(
+                                    "builder.$L(this.$L, this.$L)",
+                                    setterName,
+                                    fieldName,
+                                    scratchField)
+                            .endControlFlow();
+                } else {
+                    writeTo.addStatement(
+                            "builder.$L(this.$L, this.$L)", setterName, fieldName, scratchField);
+                }
+                continue;
+            }
+
+            if (isBytesType(field)) {
+                if (field.optional()) {
+                    writeTo.beginControlFlow("if (this.$L != null)", fieldName)
+                            .addStatement("builder.$L(this.$L)", setterName, fieldName)
+                            .endControlFlow();
+                } else {
+                    writeTo.addStatement("builder.$L(this.$L)", setterName, fieldName);
+                }
+                continue;
+            }
+
+            if (isEnum(field.type())) {
+                if (field.optional()) {
+                    writeTo.beginControlFlow("if (this.$L != null)", fieldName)
+                            .addStatement("builder.$L(this.$L)", setterName, fieldName)
+                            .endControlFlow();
+                } else {
+                    writeTo.addStatement("builder.$L(this.$L)", setterName, fieldName);
+                }
+                continue;
+            }
+
+            if (field.optional()) {
+                writeTo.beginControlFlow("if (this.$L)", "has" + capitalize(fieldName))
+                        .addStatement("builder.$L(this.$L)", setterName, fieldName)
+                        .endControlFlow();
+            } else {
+                writeTo.addStatement("builder.$L(this.$L)", setterName, fieldName);
+            }
+        }
+
+        writerImpl.addMethod(writeTo.build());
+
+        return JavaFile.builder(schema.namespace(), writerImpl.build()).indent("    ").build();
+    }
+
+    private JavaFile generateArrayWriterImpl(ResolvedMessageDefinition message) {
+        if (!messageUsedInRepeated(message.name())) {
+            return null;
+        }
+
+        ClassName builderClass = ClassName.get(schema.namespace(), message.name() + "Builder");
+        ClassName writerClass = ClassName.get(schema.namespace(), message.name() + "Writer");
+        ClassName arrayWriterClass =
+                ClassName.get(schema.namespace(), message.name() + "ArrayWriter");
+        ClassName objectsClass = ClassName.get("java.util", "Objects");
+
+        TypeSpec.Builder writer =
+                TypeSpec.classBuilder(arrayWriterClass)
+                        .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+                        .addSuperinterface(writerClass)
+                        .addJavadoc(
+                                """
+                                Auto-generated array-backed writer for $L.
+
+                                Populate arrays and reuse this instance for repeated fields.
+                                """,
+                                message.name());
+
+        writer.addField(
+                FieldSpec.builder(int.class, "count", Modifier.PUBLIC).initializer("0").build());
+        writer.addMethod(
+                MethodSpec.methodBuilder("count")
+                        .addModifiers(Modifier.PUBLIC)
+                        .returns(int.class)
+                        .addStatement("return this.count")
+                        .build());
+
+        for (ResolvedFieldDefinition field : message.fields()) {
+            String fieldName = field.name();
+            if (field.repeated()) {
+                if (isMessageType(field.type())) {
+                    ClassName childWriter =
+                            ClassName.get(schema.namespace(), field.type() + "Writer");
+                    writer.addField(
+                            FieldSpec.builder(
+                                            ArrayTypeName.of(int.class),
+                                            fieldName + "Counts",
+                                            Modifier.PUBLIC)
+                                    .build());
+                    writer.addField(
+                            FieldSpec.builder(
+                                            ArrayTypeName.of(childWriter),
+                                            fieldName + "Writers",
+                                            Modifier.PUBLIC)
+                                    .build());
+                } else if (isStringType(field)) {
+                    writer.addField(
+                            FieldSpec.builder(
+                                            ArrayTypeName.of(ArrayTypeName.of(String.class)),
+                                            fieldName,
+                                            Modifier.PUBLIC)
+                                    .build());
+                    writer.addField(
+                            FieldSpec.builder(
+                                            MemorySegment.class,
+                                            fieldName + "Scratch",
+                                            Modifier.PUBLIC)
+                                    .build());
+                } else if (isBytesType(field)) {
+                    writer.addField(
+                            FieldSpec.builder(
+                                            ArrayTypeName.of(
+                                                    ArrayTypeName.of(
+                                                            ArrayTypeName.of(TypeName.BYTE))),
+                                            fieldName,
+                                            Modifier.PUBLIC)
+                                    .build());
+                } else {
+                    TypeName elementType = getRepeatedElementType(field);
+                    writer.addField(
+                            FieldSpec.builder(
+                                            ArrayTypeName.of(ArrayTypeName.of(elementType)),
+                                            fieldName,
+                                            Modifier.PUBLIC)
+                                    .build());
+                }
+            } else if (isMessageType(field.type())) {
+                ClassName childWriter = ClassName.get(schema.namespace(), field.type() + "Writer");
+                writer.addField(
+                        FieldSpec.builder(
+                                        ArrayTypeName.of(childWriter),
+                                        fieldName + "Writers",
+                                        Modifier.PUBLIC)
+                                .build());
+            } else if (isStringType(field)) {
+                writer.addField(
+                        FieldSpec.builder(
+                                        ArrayTypeName.of(String.class), fieldName, Modifier.PUBLIC)
+                                .build());
+                writer.addField(
+                        FieldSpec.builder(
+                                        MemorySegment.class, fieldName + "Scratch", Modifier.PUBLIC)
+                                .build());
+            } else if (isBytesType(field)) {
+                writer.addField(
+                        FieldSpec.builder(
+                                        ArrayTypeName.of(MemorySegment.class),
+                                        fieldName,
+                                        Modifier.PUBLIC)
+                                .build());
+            } else if (isEnum(field.type())) {
+                ClassName enumClass = ClassName.get(schema.namespace(), field.type());
+                writer.addField(
+                        FieldSpec.builder(ArrayTypeName.of(enumClass), fieldName, Modifier.PUBLIC)
+                                .build());
+            } else {
+                TypeName javaType = getJavaTypeName(field.type());
+                if (field.optional()) {
+                    writer.addField(
+                            FieldSpec.builder(
+                                            ArrayTypeName.of(TypeName.BOOLEAN),
+                                            "has" + capitalize(fieldName),
+                                            Modifier.PUBLIC)
+                                    .build());
+                }
+                writer.addField(
+                        FieldSpec.builder(ArrayTypeName.of(javaType), fieldName, Modifier.PUBLIC)
+                                .build());
+            }
+        }
+
+        MethodSpec.Builder writeTo =
+                MethodSpec.methodBuilder("writeTo")
+                        .addAnnotation(Override.class)
+                        .addModifiers(Modifier.PUBLIC)
+                        .addParameter(builderClass, "builder")
+                        .addParameter(int.class, "index")
+                        .addStatement("$T.requireNonNull(builder, \"builder\")", objectsClass);
+
+        for (ResolvedFieldDefinition field : message.fields()) {
+            String fieldName = field.name();
+            String setterName = "set" + capitalize(fieldName);
+            if (field.repeated()) {
+                if (isMessageType(field.type())) {
+                    String writersField = fieldName + "Writers";
+                    String countsField = fieldName + "Counts";
+                    writeTo.beginControlFlow(
+                                    "if (this.$L != null && this.$L != null)",
+                                    writersField,
+                                    countsField)
+                            .addStatement(
+                                    "builder.$L(this.$L[index], this.$L[index])",
+                                    setterName,
+                                    countsField,
+                                    writersField)
+                            .endControlFlow();
+                } else if (isStringType(field)) {
+                    writeTo.beginControlFlow("if (this.$L != null)", fieldName)
+                            .addStatement(
+                                    "builder.$L(this.$L[index], this.$L)",
+                                    setterName,
+                                    fieldName,
+                                    fieldName + "Scratch")
+                            .endControlFlow();
+                } else if (isBytesType(field)) {
+                    writeTo.beginControlFlow("if (this.$L != null)", fieldName)
+                            .addStatement("builder.$L(this.$L[index])", setterName, fieldName)
+                            .endControlFlow();
+                } else {
+                    writeTo.beginControlFlow("if (this.$L != null)", fieldName)
+                            .addStatement("builder.$L(this.$L[index])", setterName, fieldName)
+                            .endControlFlow();
+                }
+                continue;
+            }
+
+            if (isMessageType(field.type())) {
+                String writersField = fieldName + "Writers";
+                writeTo.beginControlFlow(
+                                "if (this.$L != null && this.$L[index] != null)",
+                                writersField,
+                                writersField)
+                        .addStatement("builder.$L(this.$L[index])", setterName, writersField)
+                        .endControlFlow();
+                continue;
+            }
+
+            if (isStringType(field)) {
+                writeTo.beginControlFlow("if (this.$L != null)", fieldName)
+                        .addStatement(
+                                "builder.$L(this.$L[index], this.$L)",
+                                setterName,
+                                fieldName,
+                                fieldName + "Scratch")
+                        .endControlFlow();
+                continue;
+            }
+
+            if (isBytesType(field)) {
+                writeTo.beginControlFlow("if (this.$L != null)", fieldName)
+                        .addStatement("builder.$L(this.$L[index])", setterName, fieldName)
+                        .endControlFlow();
+                continue;
+            }
+
+            if (isEnum(field.type())) {
+                writeTo.beginControlFlow(
+                                "if (this.$L != null && this.$L[index] != null)",
+                                fieldName,
+                                fieldName)
+                        .addStatement("builder.$L(this.$L[index])", setterName, fieldName)
+                        .endControlFlow();
+                continue;
+            }
+
+            if (field.optional()) {
+                String hasField = "has" + capitalize(fieldName);
+                writeTo.beginControlFlow(
+                                "if (this.$L != null && this.$L[index])", hasField, hasField)
+                        .addStatement("builder.$L(this.$L[index])", setterName, fieldName)
+                        .endControlFlow();
+            } else {
+                writeTo.beginControlFlow("if (this.$L != null)", fieldName)
+                        .addStatement("builder.$L(this.$L[index])", setterName, fieldName)
+                        .endControlFlow();
+            }
+        }
+
+        writer.addMethod(writeTo.build());
+
+        return JavaFile.builder(schema.namespace(), writer.build()).indent("    ").build();
     }
 
     /** Creates the standard wrap() method for a flyweight. */
@@ -1330,7 +1889,8 @@ public final class StubGenerator {
                     layoutsClass,
                     flyweightClass,
                     objectsClass,
-                    varFieldWriterClass);
+                    varFieldWriterClass,
+                    nestedHandleClass);
         }
 
         String indexConst = constantName(field.name(), "INDEX");
@@ -1383,6 +1943,7 @@ public final class StubGenerator {
                         ClassName.get(schema.namespace(), field.type() + "Builder");
                 ParameterizedTypeName consumerType =
                         ParameterizedTypeName.get(ClassName.get(Consumer.class), childBuilder);
+                String reusableBuilderField = reusableBuilderFieldName(field);
                 method.addParameter(consumerType, "encoder");
                 method.addStatement("$T.requireNonNull(encoder, \"encoder\")", objectsClass)
                         .addStatement("ensureWritable($L, $S)", indexConst, field.name())
@@ -1397,13 +1958,16 @@ public final class StubGenerator {
                                 constantName(field.name(), "VAR_SLOT"))
                         .addStatement("long absoluteOffset = payloadBase + handle.relativeOffset()")
                         .addStatement(
-                                "$T nestedSlice = segment.asSlice(absoluteOffset,"
-                                        + " segment.byteSize() - absoluteOffset)",
-                                MemorySegment.class)
+                                "$T nestedBuilder = this.$L", childBuilder, reusableBuilderField)
+                        .beginControlFlow("if (nestedBuilder == null)")
                         .addStatement(
-                                "$T nestedBuilder = $T.inline(nestedSlice)",
-                                childBuilder,
+                                "nestedBuilder = $T.inline(segment.asSlice(absoluteOffset,"
+                                        + " segment.byteSize() - absoluteOffset))",
                                 childBuilder)
+                        .addStatement("this.$L = nestedBuilder", reusableBuilderField)
+                        .nextControlFlow("else")
+                        .addStatement("nestedBuilder.resetInline(segment, absoluteOffset)")
+                        .endControlFlow()
                         .addStatement("encoder.accept(nestedBuilder)")
                         .addStatement("long nestedSize = nestedBuilder.finishInline()")
                         .addStatement("handle.finish(nestedSize)")
@@ -1482,6 +2046,159 @@ public final class StubGenerator {
         return method.build();
     }
 
+    private MethodSpec createEnumBuilderSetterOverload(
+            ClassName builderClassName, ResolvedFieldDefinition field, ClassName objectsClass) {
+        String methodName = "set" + capitalize(field.name());
+        ClassName enumClass = ClassName.get(schema.namespace(), field.type());
+        String underlyingType = getUnderlyingType(field.type());
+        String encodedValue =
+                switch (underlyingType) {
+                    case "int8" -> "(byte) value.id()";
+                    case "int16" -> "(short) value.id()";
+                    case "int32" -> "value.id()";
+                    case "int64" -> "(long) value.id()";
+                    default ->
+                            throw new IllegalArgumentException(
+                                    "Unsupported enum storage type: " + underlyingType);
+                };
+
+        return MethodSpec.methodBuilder(methodName)
+                .addModifiers(Modifier.PUBLIC)
+                .returns(builderClassName)
+                .addParameter(enumClass, "value")
+                .addStatement("$T.requireNonNull(value, \"value\")", objectsClass)
+                .addStatement("return $L($L)", methodName, encodedValue)
+                .build();
+    }
+
+    private MethodSpec createMessageWriterSetter(
+            ClassName builderClassName,
+            ResolvedFieldDefinition field,
+            int fieldIndex,
+            Integer varSlot,
+            Integer optionalBitIndex,
+            ClassName objectsClass,
+            ClassName nestedHandleClass) {
+        ClassName childBuilder = ClassName.get(schema.namespace(), field.type() + "Builder");
+        ClassName writerClass = ClassName.get(schema.namespace(), field.type() + "Writer");
+        String reusableBuilderField = reusableBuilderFieldName(field);
+
+        MethodSpec.Builder method =
+                MethodSpec.methodBuilder("set" + capitalize(field.name()))
+                        .addModifiers(Modifier.PUBLIC)
+                        .returns(builderClassName)
+                        .addParameter(writerClass, "writer");
+
+        String indexConst = constantName(field.name(), "INDEX");
+        String optionalConst =
+                optionalBitIndex == null ? null : constantName(field.name(), "OPT_BIT");
+
+        method.addStatement("$T.requireNonNull(writer, \"writer\")", objectsClass)
+                .addStatement("ensureWritable($L, $S)", indexConst, field.name())
+                .beginControlFlow("if (varWriter == null)")
+                .addStatement("throw new IllegalStateException(\"Message has no variable fields\")")
+                .endControlFlow()
+                .addStatement(
+                        "$T handle = varWriter.beginNestedField($L)",
+                        nestedHandleClass,
+                        constantName(field.name(), "VAR_SLOT"))
+                .addStatement("long absoluteOffset = payloadBase + handle.relativeOffset()")
+                .addStatement("$T nestedBuilder = this.$L", childBuilder, reusableBuilderField)
+                .beginControlFlow("if (nestedBuilder == null)")
+                .addStatement(
+                        "nestedBuilder = $T.inline(segment.asSlice(absoluteOffset,"
+                                + " segment.byteSize() - absoluteOffset))",
+                        childBuilder)
+                .addStatement("this.$L = nestedBuilder", reusableBuilderField)
+                .nextControlFlow("else")
+                .addStatement("nestedBuilder.resetInline(segment, absoluteOffset)")
+                .endControlFlow()
+                .addStatement("writer.writeTo(nestedBuilder)")
+                .addStatement("long nestedSize = nestedBuilder.finishInline()")
+                .addStatement("handle.finish(nestedSize)")
+                .addStatement("markWritten($L)", indexConst);
+
+        if (optionalConst != null) {
+            method.addStatement("presenceBits.set($L)", optionalConst);
+        }
+
+        method.addStatement("return this");
+        return method.build();
+    }
+
+    private MethodSpec createRepeatingGroupWriterSetter(
+            ClassName builderClassName,
+            ResolvedFieldDefinition field,
+            int fieldIndex,
+            Integer varSlot,
+            Integer optionalBitIndex,
+            ClassName objectsClass,
+            ClassName nestedHandleClass) {
+        ClassName childBuilder = ClassName.get(schema.namespace(), field.type() + "Builder");
+        ClassName writerClass = ClassName.get(schema.namespace(), field.type() + "Writer");
+        String reusableBuilderField = reusableBuilderFieldName(field);
+
+        MethodSpec.Builder method =
+                MethodSpec.methodBuilder("set" + capitalize(field.name()))
+                        .addModifiers(Modifier.PUBLIC)
+                        .returns(builderClassName)
+                        .addParameter(int.class, "count")
+                        .addParameter(writerClass, "elementWriter");
+
+        String indexConst = constantName(field.name(), "INDEX");
+        String optionalConst =
+                optionalBitIndex == null ? null : constantName(field.name(), "OPT_BIT");
+
+        method.addJavadoc(
+                        "Sets the repeated $L field with the given count.\n"
+                                + "The writer is called for each element to populate it.\n"
+                                + "@param count the number of elements\n"
+                                + "@param elementWriter the writer to populate each element\n"
+                                + "@return this builder for chaining",
+                        field.name())
+                .addStatement("$T.requireNonNull(elementWriter, \"elementWriter\")", objectsClass)
+                .addStatement("ensureWritable($L, $S)", indexConst, field.name())
+                .beginControlFlow("if (varWriter == null)")
+                .addStatement("throw new IllegalStateException(\"Message has no variable fields\")")
+                .endControlFlow()
+                .addStatement(
+                        "$T handle = varWriter.beginNestedField($L)",
+                        nestedHandleClass,
+                        constantName(field.name(), "VAR_SLOT"))
+                .addStatement("long absoluteOffset = payloadBase + handle.relativeOffset()")
+                .addStatement(
+                        "$T groupBuilder = new $T()",
+                        VARIABLE_SIZE_REPEATING_GROUP_BUILDER,
+                        VARIABLE_SIZE_REPEATING_GROUP_BUILDER)
+                .addStatement("groupBuilder.beginWithCount(segment, absoluteOffset, count)")
+                .addStatement("$T nestedBuilder = this.$L", childBuilder, reusableBuilderField)
+                .beginControlFlow("for (int i = 0; i < count; i++)")
+                .addStatement("long elementStart = groupBuilder.beginElement()")
+                .beginControlFlow("if (nestedBuilder == null)")
+                .addStatement(
+                        "nestedBuilder = $T.inline(segment.asSlice(elementStart,"
+                                + " segment.byteSize() - elementStart))",
+                        childBuilder)
+                .addStatement("this.$L = nestedBuilder", reusableBuilderField)
+                .nextControlFlow("else")
+                .addStatement("nestedBuilder.resetInline(segment, elementStart)")
+                .endControlFlow()
+                .addStatement("elementWriter.writeTo(nestedBuilder, i)")
+                .addStatement("long nestedSize = nestedBuilder.finishInline()")
+                .addStatement("groupBuilder.endElement((int) nestedSize)")
+                .endControlFlow()
+                .addStatement("int bytesWritten = groupBuilder.finish()")
+                .addStatement("handle.finish(bytesWritten)")
+                .addStatement("markWritten($L)", indexConst);
+
+        if (optionalConst != null) {
+            method.addStatement("presenceBits.set($L)", optionalConst);
+        }
+
+        method.addStatement("return this");
+        return method.build();
+    }
+
     /**
      * Creates a builder setter method for a repeating group field. For primitive types: accepts an
      * array parameter. For complex types: accepts a count and a Consumer for populating elements.
@@ -1495,7 +2212,8 @@ public final class StubGenerator {
             ClassName layoutsClass,
             ClassName flyweightClass,
             ClassName objectsClass,
-            ClassName varFieldWriterClass) {
+            ClassName varFieldWriterClass,
+            ClassName nestedHandleClass) {
 
         MethodSpec.Builder method =
                 MethodSpec.methodBuilder("set" + capitalize(field.name()))
@@ -1526,10 +2244,7 @@ public final class StubGenerator {
                     .endControlFlow()
                     .addStatement(
                             "$T handle = varWriter.beginNestedField($L)",
-                            ClassName.get(
-                                    "express.mvp.myra.codec.runtime",
-                                    "VarFieldWriter",
-                                    "NestedHandle"),
+                            nestedHandleClass,
                             constantName(field.name(), "VAR_SLOT"))
                     .addStatement("long absoluteOffset = payloadBase + handle.relativeOffset()")
                     .addStatement(
@@ -1556,6 +2271,7 @@ public final class StubGenerator {
             ClassName childBuilder = ClassName.get(schema.namespace(), field.type() + "Builder");
             ParameterizedTypeName consumerType =
                     ParameterizedTypeName.get(ClassName.get(Consumer.class), childBuilder);
+            String reusableBuilderField = reusableBuilderFieldName(field);
 
             method.addParameter(int.class, "count")
                     .addParameter(consumerType, "elementWriter")
@@ -1575,10 +2291,7 @@ public final class StubGenerator {
                     .endControlFlow()
                     .addStatement(
                             "$T handle = varWriter.beginNestedField($L)",
-                            ClassName.get(
-                                    "express.mvp.myra.codec.runtime",
-                                    "VarFieldWriter",
-                                    "NestedHandle"),
+                            nestedHandleClass,
                             constantName(field.name(), "VAR_SLOT"))
                     .addStatement("long absoluteOffset = payloadBase + handle.relativeOffset()")
                     .addStatement(
@@ -1586,16 +2299,18 @@ public final class StubGenerator {
                             VARIABLE_SIZE_REPEATING_GROUP_BUILDER,
                             VARIABLE_SIZE_REPEATING_GROUP_BUILDER)
                     .addStatement("groupBuilder.beginWithCount(segment, absoluteOffset, count)")
+                    .addStatement("$T nestedBuilder = this.$L", childBuilder, reusableBuilderField)
                     .beginControlFlow("for (int i = 0; i < count; i++)")
                     .addStatement("long elementStart = groupBuilder.beginElement()")
+                    .beginControlFlow("if (nestedBuilder == null)")
                     .addStatement(
-                            "$T elementSlice = segment.asSlice(elementStart, segment.byteSize() -"
-                                    + " elementStart)",
-                            MemorySegment.class)
-                    .addStatement(
-                            "$T nestedBuilder = $T.inline(elementSlice)",
-                            childBuilder,
+                            "nestedBuilder = $T.inline(segment.asSlice(elementStart,"
+                                    + " segment.byteSize() - elementStart))",
                             childBuilder)
+                    .addStatement("this.$L = nestedBuilder", reusableBuilderField)
+                    .nextControlFlow("else")
+                    .addStatement("nestedBuilder.resetInline(segment, elementStart)")
+                    .endControlFlow()
                     .addStatement("elementWriter.accept(nestedBuilder)")
                     .addStatement("long nestedSize = nestedBuilder.finishInline()")
                     .addStatement("groupBuilder.endElement((int) nestedSize)")
@@ -1630,10 +2345,7 @@ public final class StubGenerator {
                     .endControlFlow()
                     .addStatement(
                             "$T handle = varWriter.beginNestedField($L)",
-                            ClassName.get(
-                                    "express.mvp.myra.codec.runtime",
-                                    "VarFieldWriter",
-                                    "NestedHandle"),
+                            nestedHandleClass,
                             constantName(field.name(), "VAR_SLOT"))
                     .addStatement("long absoluteOffset = payloadBase + handle.relativeOffset()")
                     .addStatement(
@@ -1671,10 +2383,7 @@ public final class StubGenerator {
                     .endControlFlow()
                     .addStatement(
                             "$T handle = varWriter.beginNestedField($L)",
-                            ClassName.get(
-                                    "express.mvp.myra.codec.runtime",
-                                    "VarFieldWriter",
-                                    "NestedHandle"),
+                            nestedHandleClass,
                             constantName(field.name(), "VAR_SLOT"))
                     .addStatement("long absoluteOffset = payloadBase + handle.relativeOffset()")
                     .addStatement(
@@ -1821,7 +2530,22 @@ public final class StubGenerator {
     }
 
     private boolean isMessageType(ResolvedFieldDefinition field) {
-        return schema.messages().stream().anyMatch(m -> m.name().equals(field.type()));
+        return isMessageType(field.type());
+    }
+
+    private boolean isMessageType(String schemaType) {
+        return schema.messages().stream().anyMatch(m -> m.name().equals(schemaType));
+    }
+
+    private boolean messageUsedInRepeated(String messageName) {
+        for (ResolvedMessageDefinition message : schema.messages()) {
+            for (ResolvedFieldDefinition field : message.fields()) {
+                if (field.repeated() && field.type().equals(messageName)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private boolean isFixedInlineUtf8(ResolvedFieldDefinition field) {
@@ -1906,6 +2630,10 @@ public final class StubGenerator {
                     throw new IllegalArgumentException(
                             "Unsupported type for writer: " + schemaType);
         };
+    }
+
+    private String reusableBuilderFieldName(ResolvedFieldDefinition field) {
+        return field.name() + "ReusableBuilder";
     }
 
     private static String capitalize(String s) {

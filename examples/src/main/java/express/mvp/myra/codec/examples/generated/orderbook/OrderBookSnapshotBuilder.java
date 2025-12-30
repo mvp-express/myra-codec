@@ -1,11 +1,11 @@
 package express.mvp.myra.codec.examples.generated.orderbook;
 
 import express.mvp.myra.codec.runtime.MessageEncoder;
-import express.mvp.roray.ffm.utils.memory.PooledSegment;
 import express.mvp.myra.codec.runtime.struct.MessageHeader;
 import express.mvp.myra.codec.runtime.struct.VariableSizeRepeatingGroupBuilder;
 import express.mvp.roray.ffm.utils.memory.BitSetView;
 import express.mvp.roray.ffm.utils.memory.Layouts;
+import express.mvp.roray.ffm.utils.memory.PooledSegment;
 import express.mvp.roray.ffm.utils.memory.VarFieldWriter;
 import java.lang.String;
 import java.lang.foreign.MemorySegment;
@@ -18,7 +18,7 @@ import java.util.function.Consumer;
 public final class OrderBookSnapshotBuilder {
     private static final int TOTAL_FIELDS = 11;
 
-    private static final int VAR_FIELD_COUNT = 8;
+    private static final int VAR_FIELD_COUNT = 7;
 
     private static final int PRESENCE_BYTES = 1;
 
@@ -60,43 +60,49 @@ public final class OrderBookSnapshotBuilder {
 
     private static final int TRADINGSTATUS_INDEX = 6;
 
-    private static final int TRADINGSTATUS_VAR_SLOT = 3;
-
     private static final int LASTTRADE_INDEX = 7;
 
-    private static final int LASTTRADE_VAR_SLOT = 4;
+    private static final int LASTTRADE_VAR_SLOT = 3;
 
     private static final int BIDS_INDEX = 8;
 
-    private static final int BIDS_VAR_SLOT = 5;
+    private static final int BIDS_VAR_SLOT = 4;
 
     private static final int ASKS_INDEX = 9;
 
-    private static final int ASKS_VAR_SLOT = 6;
+    private static final int ASKS_VAR_SLOT = 5;
 
     private static final int METADATA_INDEX = 10;
 
-    private static final int METADATA_VAR_SLOT = 7;
+    private static final int METADATA_VAR_SLOT = 6;
 
     private static final int[] REQUIRED_FIELD_INDEXES = new int[] { 0, 1, 2, 3, 4, 5, 8, 9, 10 };
 
     private final MessageEncoder encoder;
 
-    private final MemorySegment segment;
+    private MemorySegment segment;
 
-    private final long payloadBase;
+    private long payloadBase;
 
     private final boolean inline;
 
     private final boolean[] written;
 
-    private final VarFieldWriter varWriter;
+    private VarFieldWriter varWriter;
 
     private final BitSetView presenceBits;
 
     private boolean built;
 
     private long frameLength;
+
+    private TradeBuilder lastTradeReusableBuilder;
+
+    private LevelBuilder bidsReusableBuilder;
+
+    private LevelBuilder asksReusableBuilder;
+
+    private MetadataEntryBuilder metadataReusableBuilder;
 
     private OrderBookSnapshotBuilder(MessageEncoder encoder, MemorySegment segment,
             boolean inlineMode) {
@@ -124,6 +130,26 @@ public final class OrderBookSnapshotBuilder {
     static OrderBookSnapshotBuilder inline(MemorySegment target) {
         Objects.requireNonNull(target, "target");
         return new OrderBookSnapshotBuilder(null, target, true);
+    }
+
+    public void resetInline(MemorySegment target, long offset) {
+        if (!inline) {
+            throw new IllegalStateException("resetInline() is only valid for inline builders");
+        }
+        this.segment = Objects.requireNonNull(target, "target");
+        this.payloadBase = offset;
+        this.built = false;
+        this.frameLength = 0;
+        for (int i = 0; i < written.length; i++) {
+            written[i] = false;
+        }
+        MemorySegment body = segment.asSlice(this.payloadBase, segment.byteSize() - this.payloadBase);
+        this.varWriter = new VarFieldWriter(body, OrderBookSnapshotFlyweight.BLOCK_LENGTH - (VAR_FIELD_COUNT * 8), VAR_FIELD_COUNT);
+        for (int i = 0; i < VAR_FIELD_COUNT; i++) {
+                    this.varWriter.reserveVarField();
+                };
+        this.presenceBits.wrap(segment, this.payloadBase, PRESENCE_BYTES);
+        this.presenceBits.clearAll();
     }
 
     private void ensureWritable(int fieldIndex, String fieldName) {
@@ -247,17 +273,17 @@ public final class OrderBookSnapshotBuilder {
         return this;
     }
 
-    public OrderBookSnapshotBuilder setTradingStatus(String value, MemorySegment scratchBuffer) {
-        Objects.requireNonNull(value, "value");
-        Objects.requireNonNull(scratchBuffer, "scratchBuffer");
+    public OrderBookSnapshotBuilder setTradingStatus(byte value) {
         ensureWritable(TRADINGSTATUS_INDEX, "tradingStatus");
-        if (varWriter == null) {
-            throw new IllegalStateException("Message has no variable fields");
-        }
-        varWriter.writeVarField(TRADINGSTATUS_VAR_SLOT, value, scratchBuffer);
+        segment.set(Layouts.BYTE, payloadBase + OrderBookSnapshotFlyweight.TRADINGSTATUS_OFFSET, value);
         markWritten(TRADINGSTATUS_INDEX);
         presenceBits.set(TRADINGSTATUS_OPT_BIT);
         return this;
+    }
+
+    public OrderBookSnapshotBuilder setTradingStatus(TradingStatus value) {
+        Objects.requireNonNull(value, "value");
+        return setTradingStatus((byte) value.id());
     }
 
     public OrderBookSnapshotBuilder setLastTrade(Consumer<TradeBuilder> encoder) {
@@ -268,9 +294,37 @@ public final class OrderBookSnapshotBuilder {
         }
         VarFieldWriter.NestedFieldHandle handle = varWriter.beginNestedField(LASTTRADE_VAR_SLOT);
         long absoluteOffset = payloadBase + handle.relativeOffset();
-        MemorySegment nestedSlice = segment.asSlice(absoluteOffset, segment.byteSize() - absoluteOffset);
-        TradeBuilder nestedBuilder = TradeBuilder.inline(nestedSlice);
+        TradeBuilder nestedBuilder = this.lastTradeReusableBuilder;
+        if (nestedBuilder == null) {
+            nestedBuilder = TradeBuilder.inline(segment.asSlice(absoluteOffset, segment.byteSize() - absoluteOffset));
+            this.lastTradeReusableBuilder = nestedBuilder;
+        } else {
+            nestedBuilder.resetInline(segment, absoluteOffset);
+        }
         encoder.accept(nestedBuilder);
+        long nestedSize = nestedBuilder.finishInline();
+        handle.finish(nestedSize);
+        markWritten(LASTTRADE_INDEX);
+        presenceBits.set(LASTTRADE_OPT_BIT);
+        return this;
+    }
+
+    public OrderBookSnapshotBuilder setLastTrade(TradeWriter writer) {
+        Objects.requireNonNull(writer, "writer");
+        ensureWritable(LASTTRADE_INDEX, "lastTrade");
+        if (varWriter == null) {
+            throw new IllegalStateException("Message has no variable fields");
+        }
+        VarFieldWriter.NestedFieldHandle handle = varWriter.beginNestedField(LASTTRADE_VAR_SLOT);
+        long absoluteOffset = payloadBase + handle.relativeOffset();
+        TradeBuilder nestedBuilder = this.lastTradeReusableBuilder;
+        if (nestedBuilder == null) {
+            nestedBuilder = TradeBuilder.inline(segment.asSlice(absoluteOffset, segment.byteSize() - absoluteOffset));
+            this.lastTradeReusableBuilder = nestedBuilder;
+        } else {
+            nestedBuilder.resetInline(segment, absoluteOffset);
+        }
+        writer.writeTo(nestedBuilder);
         long nestedSize = nestedBuilder.finishInline();
         handle.finish(nestedSize);
         markWritten(LASTTRADE_INDEX);
@@ -291,15 +345,56 @@ public final class OrderBookSnapshotBuilder {
         if (varWriter == null) {
             throw new IllegalStateException("Message has no variable fields");
         }
-        express.mvp.myra.codec.runtime.VarFieldWriter.NestedHandle handle = varWriter.beginNestedField(BIDS_VAR_SLOT);
+        VarFieldWriter.NestedFieldHandle handle = varWriter.beginNestedField(BIDS_VAR_SLOT);
         long absoluteOffset = payloadBase + handle.relativeOffset();
         VariableSizeRepeatingGroupBuilder groupBuilder = new VariableSizeRepeatingGroupBuilder();
         groupBuilder.beginWithCount(segment, absoluteOffset, count);
+        LevelBuilder nestedBuilder = this.bidsReusableBuilder;
         for (int i = 0; i < count; i++) {
             long elementStart = groupBuilder.beginElement();
-            MemorySegment elementSlice = segment.asSlice(elementStart, segment.byteSize() - elementStart);
-            LevelBuilder nestedBuilder = LevelBuilder.inline(elementSlice);
+            if (nestedBuilder == null) {
+                nestedBuilder = LevelBuilder.inline(segment.asSlice(elementStart, segment.byteSize() - elementStart));
+                this.bidsReusableBuilder = nestedBuilder;
+            } else {
+                nestedBuilder.resetInline(segment, elementStart);
+            }
             elementWriter.accept(nestedBuilder);
+            long nestedSize = nestedBuilder.finishInline();
+            groupBuilder.endElement((int) nestedSize);
+        }
+        int bytesWritten = groupBuilder.finish();
+        handle.finish(bytesWritten);
+        markWritten(BIDS_INDEX);
+        return this;
+    }
+
+    /**
+     * Sets the repeated bids field with the given count.
+     * The writer is called for each element to populate it.
+     * @param count the number of elements
+     * @param elementWriter the writer to populate each element
+     * @return this builder for chaining
+     */
+    public OrderBookSnapshotBuilder setBids(int count, LevelWriter elementWriter) {
+        Objects.requireNonNull(elementWriter, "elementWriter");
+        ensureWritable(BIDS_INDEX, "bids");
+        if (varWriter == null) {
+            throw new IllegalStateException("Message has no variable fields");
+        }
+        VarFieldWriter.NestedFieldHandle handle = varWriter.beginNestedField(BIDS_VAR_SLOT);
+        long absoluteOffset = payloadBase + handle.relativeOffset();
+        VariableSizeRepeatingGroupBuilder groupBuilder = new VariableSizeRepeatingGroupBuilder();
+        groupBuilder.beginWithCount(segment, absoluteOffset, count);
+        LevelBuilder nestedBuilder = this.bidsReusableBuilder;
+        for (int i = 0; i < count; i++) {
+            long elementStart = groupBuilder.beginElement();
+            if (nestedBuilder == null) {
+                nestedBuilder = LevelBuilder.inline(segment.asSlice(elementStart, segment.byteSize() - elementStart));
+                this.bidsReusableBuilder = nestedBuilder;
+            } else {
+                nestedBuilder.resetInline(segment, elementStart);
+            }
+            elementWriter.writeTo(nestedBuilder, i);
             long nestedSize = nestedBuilder.finishInline();
             groupBuilder.endElement((int) nestedSize);
         }
@@ -322,15 +417,56 @@ public final class OrderBookSnapshotBuilder {
         if (varWriter == null) {
             throw new IllegalStateException("Message has no variable fields");
         }
-        express.mvp.myra.codec.runtime.VarFieldWriter.NestedHandle handle = varWriter.beginNestedField(ASKS_VAR_SLOT);
+        VarFieldWriter.NestedFieldHandle handle = varWriter.beginNestedField(ASKS_VAR_SLOT);
         long absoluteOffset = payloadBase + handle.relativeOffset();
         VariableSizeRepeatingGroupBuilder groupBuilder = new VariableSizeRepeatingGroupBuilder();
         groupBuilder.beginWithCount(segment, absoluteOffset, count);
+        LevelBuilder nestedBuilder = this.asksReusableBuilder;
         for (int i = 0; i < count; i++) {
             long elementStart = groupBuilder.beginElement();
-            MemorySegment elementSlice = segment.asSlice(elementStart, segment.byteSize() - elementStart);
-            LevelBuilder nestedBuilder = LevelBuilder.inline(elementSlice);
+            if (nestedBuilder == null) {
+                nestedBuilder = LevelBuilder.inline(segment.asSlice(elementStart, segment.byteSize() - elementStart));
+                this.asksReusableBuilder = nestedBuilder;
+            } else {
+                nestedBuilder.resetInline(segment, elementStart);
+            }
             elementWriter.accept(nestedBuilder);
+            long nestedSize = nestedBuilder.finishInline();
+            groupBuilder.endElement((int) nestedSize);
+        }
+        int bytesWritten = groupBuilder.finish();
+        handle.finish(bytesWritten);
+        markWritten(ASKS_INDEX);
+        return this;
+    }
+
+    /**
+     * Sets the repeated asks field with the given count.
+     * The writer is called for each element to populate it.
+     * @param count the number of elements
+     * @param elementWriter the writer to populate each element
+     * @return this builder for chaining
+     */
+    public OrderBookSnapshotBuilder setAsks(int count, LevelWriter elementWriter) {
+        Objects.requireNonNull(elementWriter, "elementWriter");
+        ensureWritable(ASKS_INDEX, "asks");
+        if (varWriter == null) {
+            throw new IllegalStateException("Message has no variable fields");
+        }
+        VarFieldWriter.NestedFieldHandle handle = varWriter.beginNestedField(ASKS_VAR_SLOT);
+        long absoluteOffset = payloadBase + handle.relativeOffset();
+        VariableSizeRepeatingGroupBuilder groupBuilder = new VariableSizeRepeatingGroupBuilder();
+        groupBuilder.beginWithCount(segment, absoluteOffset, count);
+        LevelBuilder nestedBuilder = this.asksReusableBuilder;
+        for (int i = 0; i < count; i++) {
+            long elementStart = groupBuilder.beginElement();
+            if (nestedBuilder == null) {
+                nestedBuilder = LevelBuilder.inline(segment.asSlice(elementStart, segment.byteSize() - elementStart));
+                this.asksReusableBuilder = nestedBuilder;
+            } else {
+                nestedBuilder.resetInline(segment, elementStart);
+            }
+            elementWriter.writeTo(nestedBuilder, i);
             long nestedSize = nestedBuilder.finishInline();
             groupBuilder.endElement((int) nestedSize);
         }
@@ -354,15 +490,56 @@ public final class OrderBookSnapshotBuilder {
         if (varWriter == null) {
             throw new IllegalStateException("Message has no variable fields");
         }
-        express.mvp.myra.codec.runtime.VarFieldWriter.NestedHandle handle = varWriter.beginNestedField(METADATA_VAR_SLOT);
+        VarFieldWriter.NestedFieldHandle handle = varWriter.beginNestedField(METADATA_VAR_SLOT);
         long absoluteOffset = payloadBase + handle.relativeOffset();
         VariableSizeRepeatingGroupBuilder groupBuilder = new VariableSizeRepeatingGroupBuilder();
         groupBuilder.beginWithCount(segment, absoluteOffset, count);
+        MetadataEntryBuilder nestedBuilder = this.metadataReusableBuilder;
         for (int i = 0; i < count; i++) {
             long elementStart = groupBuilder.beginElement();
-            MemorySegment elementSlice = segment.asSlice(elementStart, segment.byteSize() - elementStart);
-            MetadataEntryBuilder nestedBuilder = MetadataEntryBuilder.inline(elementSlice);
+            if (nestedBuilder == null) {
+                nestedBuilder = MetadataEntryBuilder.inline(segment.asSlice(elementStart, segment.byteSize() - elementStart));
+                this.metadataReusableBuilder = nestedBuilder;
+            } else {
+                nestedBuilder.resetInline(segment, elementStart);
+            }
             elementWriter.accept(nestedBuilder);
+            long nestedSize = nestedBuilder.finishInline();
+            groupBuilder.endElement((int) nestedSize);
+        }
+        int bytesWritten = groupBuilder.finish();
+        handle.finish(bytesWritten);
+        markWritten(METADATA_INDEX);
+        return this;
+    }
+
+    /**
+     * Sets the repeated metadata field with the given count.
+     * The writer is called for each element to populate it.
+     * @param count the number of elements
+     * @param elementWriter the writer to populate each element
+     * @return this builder for chaining
+     */
+    public OrderBookSnapshotBuilder setMetadata(int count, MetadataEntryWriter elementWriter) {
+        Objects.requireNonNull(elementWriter, "elementWriter");
+        ensureWritable(METADATA_INDEX, "metadata");
+        if (varWriter == null) {
+            throw new IllegalStateException("Message has no variable fields");
+        }
+        VarFieldWriter.NestedFieldHandle handle = varWriter.beginNestedField(METADATA_VAR_SLOT);
+        long absoluteOffset = payloadBase + handle.relativeOffset();
+        VariableSizeRepeatingGroupBuilder groupBuilder = new VariableSizeRepeatingGroupBuilder();
+        groupBuilder.beginWithCount(segment, absoluteOffset, count);
+        MetadataEntryBuilder nestedBuilder = this.metadataReusableBuilder;
+        for (int i = 0; i < count; i++) {
+            long elementStart = groupBuilder.beginElement();
+            if (nestedBuilder == null) {
+                nestedBuilder = MetadataEntryBuilder.inline(segment.asSlice(elementStart, segment.byteSize() - elementStart));
+                this.metadataReusableBuilder = nestedBuilder;
+            } else {
+                nestedBuilder.resetInline(segment, elementStart);
+            }
+            elementWriter.writeTo(nestedBuilder, i);
             long nestedSize = nestedBuilder.finishInline();
             groupBuilder.endElement((int) nestedSize);
         }

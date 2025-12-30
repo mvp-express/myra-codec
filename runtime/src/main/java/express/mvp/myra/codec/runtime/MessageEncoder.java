@@ -18,8 +18,8 @@ import java.lang.foreign.MemorySegment;
  * safely shared across threads.
  *
  * <p>However, the underlying {@link MemorySegmentPool} may be shared across threads if it is
- * thread-safe (such as {@code express.mvp.roray.ffm.pool.LockFreeBufferPool}).
- * In typical high-throughput scenarios:
+ * thread-safe (such as {@code express.mvp.roray.ffm.pool.LockFreeBufferPool}). In typical
+ * high-throughput scenarios:
  *
  * <ul>
  *   <li>Create one {@code MessageEncoder} per thread (or use thread-local)

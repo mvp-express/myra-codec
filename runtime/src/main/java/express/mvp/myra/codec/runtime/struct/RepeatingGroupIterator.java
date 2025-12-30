@@ -26,7 +26,8 @@ import java.util.Objects;
  * <p><b>Example Usage:</b>
  *
  * <pre>{@code
- * RepeatingGroupIterator iter = new RepeatingGroupIterator(8); // 8 bytes per long
+ * // elementSize in bytes — use 8 for a 64-bit long
+ * RepeatingGroupIterator iter = new RepeatingGroupIterator(8);
  * iter.wrap(segment, offset);
  * int count = iter.count();
  * for (int i = 0; i < count; i++) {
@@ -44,7 +45,7 @@ public final class RepeatingGroupIterator {
 
     private final int elementSize;
     @Nullable private MemorySegment segment;
-    private long baseOffset;
+    // private long baseOffset;
     private long dataOffset;
     private int count;
 
