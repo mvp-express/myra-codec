@@ -395,7 +395,7 @@ class VariableSizeRepeatingGroupTest {
                 builder.beginWithCount(segment, 0, 2);
                 builder.addString("first");
                 builder.addString("group");
-                int firstSize = builder.finish();
+                builder.finish();
 
                 // Second use at different offset
                 builder.beginWithCount(segment, 200, 3);

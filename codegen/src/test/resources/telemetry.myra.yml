@@ -1,0 +1,39 @@
+namespace: "com.example.telemetry"
+version: "1.0.0"
+
+enums:
+  - name: "Health"
+    type: "int8"
+    values:
+      - name: "OK"
+        id: 0
+      - name: "WARN"
+        id: 1
+      - name: "FAIL"
+        id: 2
+
+messages:
+  - name: "Telemetry"
+    fields:
+      - tag: 1
+        name: "deviceId"
+        type: "string"
+        fixed_capacity: 16
+      - tag: 2
+        name: "sequence"
+        type: "int32"
+      - tag: 3
+        name: "health"
+        type: "Health"
+      - tag: 4
+        name: "latencies"
+        type: "int64"
+        repeated: true
+      - tag: 5
+        name: "note"
+        type: "string"
+        optional: true
+      - tag: 6
+        name: "payload"
+        type: "bytes"
+        optional: true

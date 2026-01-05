@@ -1,0 +1,21 @@
+schemaInfo:
+  version: "1.0.0"
+  sourceFile: "telemetry.myra.yml"
+  namespace: "express.mvp.myra.codec.examples.generated.telemetry"
+messages:
+  Telemetry:
+    id: 1
+    fields:
+      sequence: 2
+      note: 5
+      latencies: 4
+      payload: 6
+      health: 3
+      deviceId: 1
+enums:
+  Health:
+    values:
+      OK: 0
+      WARN: 1
+      FAIL: 2
+reservedIds: {}

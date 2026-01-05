@@ -3,14 +3,15 @@ package express.mvp.myra.codec.codegen;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.palantir.javapoet.JavaFile;
-import express.mvp.myra.codec.codegen.resolver.*;
 import express.mvp.myra.codec.schema.EnumValueDefinition;
+import express.mvp.myra.codec.schema.resolver.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+/** Tests for Java source generation from resolved schemas. */
 class StubGeneratorTest {
 
     @TempDir Path tempDir;

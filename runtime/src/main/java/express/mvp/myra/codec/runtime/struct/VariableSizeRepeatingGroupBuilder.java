@@ -4,6 +4,7 @@ import static express.mvp.roray.ffm.utils.memory.Layouts.*;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import express.mvp.roray.ffm.utils.memory.FlyweightAccessor;
 import java.lang.foreign.MemorySegment;
 import java.nio.charset.StandardCharsets;
@@ -368,6 +369,9 @@ public final class VariableSizeRepeatingGroupBuilder {
      *
      * @return the segment being written to
      */
+    @SuppressFBWarnings(
+            value = "EI_EXPOSE_REP",
+            justification = "MemorySegment ownership is managed by the caller.")
     public MemorySegment segment() {
         return segment;
     }

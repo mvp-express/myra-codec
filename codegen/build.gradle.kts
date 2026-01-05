@@ -5,7 +5,8 @@ plugins {
     alias(libs.plugins.spotless)
     alias(libs.plugins.spotbugs)
     checkstyle
-    id("com.gradleup.shadow") version "9.1.0" 
+    id("com.gradleup.shadow") version "9.1.0"
+    id("com.vanniktech.maven.publish")
 }
 
 val libs = extensions.getByType<VersionCatalogsExtension>().named("libs")
@@ -14,7 +15,7 @@ application {
     mainClass.set("express.mvp.myra.codec.codegen.MyraCodegenCli")
 }
 
-group = "express.mvp.myra.codec"
+group = "express.mvp.myra"
 version = "0.1.0"
 
 repositories {
@@ -45,6 +46,7 @@ checkstyle {
 }
 
 tasks.withType<Checkstyle>().configureEach {
+    exclude("**/module-info.java")
     reports {
         xml.required.set(true)
         html.required.set(true)
@@ -52,19 +54,17 @@ tasks.withType<Checkstyle>().configureEach {
 }
 
 // SpotBugs configuration
-// NOTE: SpotBugs is disabled because it does not yet support Java 25 class files (version 69).
-// Re-enable when SpotBugs adds support for Java 25+.
 spotbugs {
-    ignoreFailures.set(true)  // Disabled until Java 25 support is added
+    toolVersion.set("4.9.8")
+    ignoreFailures.set(false)
     showStackTraces.set(true)
     showProgress.set(true)
     effort.set(com.github.spotbugs.snom.Effort.MAX)
     reportLevel.set(com.github.spotbugs.snom.Confidence.LOW)
 }
 
-// Disable SpotBugs tasks entirely for now
 tasks.withType<com.github.spotbugs.snom.SpotBugsTask>().configureEach {
-    enabled = false  // Disabled until Java 25 support is added
+    enabled = true
     reports {
         create("html") {
             required.set(true)
@@ -84,6 +84,7 @@ dependencies {
     implementation("info.picocli:picocli:4.7.7")
 
     testImplementation(project(":runtime"))
+    testCompileOnly("com.github.spotbugs:spotbugs-annotations:4.9.8")
 }
 
 testing {
@@ -121,5 +122,45 @@ tasks.shadowJar {
 tasks.jar {
     manifest {
         attributes["Main-Class"] = "express.mvp.myra.codec.codegen.MyraCodegenCli"
+    }
+}
+
+mavenPublishing {
+    publishToMavenCentral()
+    signAllPublications()
+
+    coordinates(
+        groupId = group.toString(),
+        artifactId = "codec-codegen",
+        version = version.toString(),
+    )
+
+    pom {
+        name.set("myra-codec-codegen")
+        description.set("Code generation tool for Myra codec framework.")
+        inceptionYear.set("2025")
+        url.set("https://github.com/mvp-express/myra-codec")
+
+        licenses {
+            license {
+                name.set("The Apache License, Version 2.0")
+                url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                distribution.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+            }
+        }
+
+        developers {
+            developer {
+                id.set("mvp-express")
+                name.set("MVP Express Team")
+                email.set("hi@mvp.express")
+            }
+        }
+
+        scm {
+            url.set("https://github.com/mvp-express/myra-codec")
+            connection.set("scm:git:git://github.com/mvp-express/myra-codec.git")
+            developerConnection.set("scm:git:ssh://git@github.com/mvp-express/myra-codec.git")
+        }
     }
 }

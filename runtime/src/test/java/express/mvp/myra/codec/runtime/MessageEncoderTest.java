@@ -9,6 +9,7 @@ import express.mvp.roray.ffm.utils.memory.SegmentUtils;
 import java.lang.foreign.MemorySegment;
 import org.junit.jupiter.api.Test;
 
+/** Tests for {@link MessageEncoder}. */
 class MessageEncoderTest {
 
     @Test

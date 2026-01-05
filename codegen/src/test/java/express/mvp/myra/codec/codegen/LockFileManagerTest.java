@@ -2,13 +2,15 @@ package express.mvp.myra.codec.codegen;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import express.mvp.myra.codec.codegen.resolver.LockFile;
+import express.mvp.myra.codec.schema.LockFileManager;
+import express.mvp.myra.codec.schema.resolver.LockFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+/** Tests lock file IO in the codegen module. */
 class LockFileManagerTest {
 
     @TempDir Path tempDir;

@@ -1,16 +1,20 @@
 plugins {
     base
+    id("com.vanniktech.maven.publish") version "0.35.0" apply false
 }
 
 // Configure Javadoc for each subproject
 subprojects {
     plugins.withType<JavaPlugin> {
+        tasks.withType<JavaCompile>().configureEach {
+            options.release.set(25)
+        }
         tasks.withType<Javadoc>().configureEach {
             (options as StandardJavadocDocletOptions).apply {
                 encoding = "UTF-8"
                 addBooleanOption("-enable-preview", true)
                 addStringOption("-release", "25")
-                links("https://docs.oracle.com/en/java/javase/24/docs/api/")
+                links("https://docs.oracle.com/en/java/javase/25/docs/api/")
                 addBooleanOption("Xdoclint:none", true)
                 header = "<b>Myra Codec</b>"
                 bottom = "Copyright &#169; 2025-2026 MVP.Express. All rights reserved."

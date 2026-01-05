@@ -1,0 +1,25 @@
+schemaInfo:
+  sourceFile: "portfolio.myra.yml"
+  version: "1.0.0"
+  namespace: "express.mvp.myra.codec.examples.generated.portfolio"
+messages:
+  Portfolio:
+    id: 2
+    fields:
+      accountId: 1
+      attachments: 4
+      legs: 2
+      comment: 5
+      tags: 3
+  Leg:
+    id: 1
+    fields:
+      symbol: 1
+      side: 2
+      quantity: 3
+enums:
+  Side:
+    values:
+      SELL: 1
+      BUY: 0
+reservedIds: {}

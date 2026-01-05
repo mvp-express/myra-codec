@@ -2,6 +2,7 @@ package express.mvp.myra.codec.runtime.struct;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import org.junit.jupiter.api.DisplayName;
@@ -40,6 +41,13 @@ class RepeatingGroupIteratorTest {
     @Nested
     @DisplayName("Wrapping")
     class WrappingTests {
+
+        @SuppressFBWarnings(
+                value = "NP_NONNULL_PARAM_VIOLATION",
+                justification = "Intentional null passed to verify guard clauses.")
+        private static void wrapWithNull(RepeatingGroupIterator iterator) {
+            iterator.wrap(null, 0);
+        }
 
         @Test
         @DisplayName("Should read count from wrapped segment")
@@ -83,7 +91,7 @@ class RepeatingGroupIteratorTest {
         @DisplayName("Should reject null segment")
         void shouldRejectNullSegment() {
             RepeatingGroupIterator iter = new RepeatingGroupIterator(8);
-            assertThrows(NullPointerException.class, () -> iter.wrap(null, 0));
+            assertThrows(NullPointerException.class, () -> wrapWithNull(iter));
         }
 
         @Test
@@ -258,14 +266,14 @@ class RepeatingGroupIteratorTest {
                                 java.nio.ByteOrder.BIG_ENDIAN);
 
                 segment.set(intLayout, 0, 2);
-                segment.set(doubleLayout, 4, 3.14);
-                segment.set(doubleLayout, 12, 2.71);
+                segment.set(doubleLayout, 4, Math.PI);
+                segment.set(doubleLayout, 12, Math.E);
 
                 RepeatingGroupIterator iter = new RepeatingGroupIterator(8);
                 iter.wrap(segment, 0);
 
-                assertEquals(3.14, iter.getDoubleAt(0), 0.001);
-                assertEquals(2.71, iter.getDoubleAt(1), 0.001);
+                assertEquals(Math.PI, iter.getDoubleAt(0), 0.001);
+                assertEquals(Math.E, iter.getDoubleAt(1), 0.001);
             }
         }
     }

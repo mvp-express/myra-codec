@@ -4,6 +4,7 @@ import static express.mvp.roray.ffm.utils.memory.Layouts.*;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.lang.foreign.MemorySegment;
 import java.util.Objects;
 
@@ -45,7 +46,6 @@ public final class RepeatingGroupIterator {
 
     private final int elementSize;
     @Nullable private MemorySegment segment;
-    // private long baseOffset;
     private long dataOffset;
     private int count;
 
@@ -71,7 +71,6 @@ public final class RepeatingGroupIterator {
      */
     public void wrap(@NonNull MemorySegment segment, long offset) {
         this.segment = Objects.requireNonNull(segment, "segment");
-        this.baseOffset = offset;
         this.count = segment.get(INT_BE, offset);
         this.dataOffset = offset + COUNT_SIZE;
     }
@@ -232,6 +231,9 @@ public final class RepeatingGroupIterator {
      *
      * @return the wrapped segment, or null if not wrapped
      */
+    @SuppressFBWarnings(
+            value = "EI_EXPOSE_REP",
+            justification = "MemorySegment ownership is managed by the caller.")
     public MemorySegment segment() {
         return segment;
     }
@@ -239,7 +241,6 @@ public final class RepeatingGroupIterator {
     /** Resets this iterator, releasing the reference to the segment. */
     public void reset() {
         this.segment = null;
-        this.baseOffset = 0;
         this.dataOffset = 0;
         this.count = 0;
     }

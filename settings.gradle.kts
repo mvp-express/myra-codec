@@ -17,3 +17,9 @@ include("runtime")
 include("codegen")
 include("benchmarks")
 include("examples")
+
+includeBuild("../roray-ffm-utils") {
+    dependencySubstitution {
+        substitute(module("express.mvp:roray-ffm")).using(project(":lib"))
+    }
+}

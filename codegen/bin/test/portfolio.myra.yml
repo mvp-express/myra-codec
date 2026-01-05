@@ -1,0 +1,46 @@
+namespace: "com.example.portfolio"
+version: "1.0.0"
+
+enums:
+  - name: "Side"
+    type: "int8"
+    values:
+      - name: "BUY"
+        id: 0
+      - name: "SELL"
+        id: 1
+
+messages:
+  - name: "Leg"
+    fields:
+      - tag: 1
+        name: "symbol"
+        type: "string"
+        fixed_capacity: 8
+      - tag: 2
+        name: "side"
+        type: "Side"
+      - tag: 3
+        name: "quantity"
+        type: "int32"
+  - name: "Portfolio"
+    fields:
+      - tag: 1
+        name: "accountId"
+        type: "string"
+      - tag: 2
+        name: "legs"
+        type: "Leg"
+        repeated: true
+      - tag: 3
+        name: "tags"
+        type: "string"
+        repeated: true
+      - tag: 4
+        name: "attachments"
+        type: "bytes"
+        repeated: true
+      - tag: 5
+        name: "comment"
+        type: "string"
+        optional: true

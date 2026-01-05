@@ -1,15 +1,18 @@
 package express.mvp.myra.codec.codegen;
 
-import express.mvp.myra.codec.codegen.resolver.LockFile;
-import express.mvp.myra.codec.codegen.resolver.ResolutionResult;
-import express.mvp.myra.codec.codegen.resolver.SchemaResolver;
+import express.mvp.myra.codec.schema.LockFileManager;
 import express.mvp.myra.codec.schema.SchemaDefinition;
+import express.mvp.myra.codec.schema.SchemaParser;
+import express.mvp.myra.codec.schema.resolver.LockFile;
+import express.mvp.myra.codec.schema.resolver.ResolutionResult;
+import express.mvp.myra.codec.schema.resolver.SchemaResolver;
 import java.io.File;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
+/** Command-line entry point for generating Java codecs from Myra schemas. */
 @Command(
         name = "MyraCodec Code Gen",
         mixinStandardHelpOptions = true,
@@ -35,6 +38,11 @@ public class MyraCodegenCli implements Callable<Integer> {
             description = "The path to the .myra.lock file.")
     private File lockFile;
 
+    /**
+     * Execute the code generation workflow.
+     *
+     * @return the process exit code (0 for success)
+     */
     @Override
     public Integer call() {
         System.out.println("Starting MYRA Codec code generation...");
@@ -96,6 +104,11 @@ public class MyraCodegenCli implements Callable<Integer> {
         return 0; // Success exit code
     }
 
+    /**
+     * CLI entry point.
+     *
+     * @param args command-line arguments
+     */
     public static void main(String[] args) {
         int exitCode = new CommandLine(new MyraCodegenCli()).execute(args);
         System.exit(exitCode);

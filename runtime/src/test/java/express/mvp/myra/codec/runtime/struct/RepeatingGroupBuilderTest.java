@@ -219,16 +219,16 @@ class RepeatingGroupBuilderTest {
 
                 RepeatingGroupBuilder builder = new RepeatingGroupBuilder(8);
                 builder.wrap(segment, 0);
-                builder.addDouble(3.14);
-                builder.addDouble(2.71);
+                builder.addDouble(Math.PI);
+                builder.addDouble(Math.E);
                 builder.finish();
 
                 RepeatingGroupIterator iter = new RepeatingGroupIterator(8);
                 iter.wrap(segment, 0);
 
                 assertEquals(2, iter.count());
-                assertEquals(3.14, iter.getDoubleAt(0), 0.001);
-                assertEquals(2.71, iter.getDoubleAt(1), 0.001);
+                assertEquals(Math.PI, iter.getDoubleAt(0), 0.001);
+                assertEquals(Math.E, iter.getDoubleAt(1), 0.001);
             }
         }
     }

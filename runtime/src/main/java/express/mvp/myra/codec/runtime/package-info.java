@@ -1,6 +1,9 @@
 /**
  * Myra Codec Runtime - Core classes for high-performance message encoding and decoding.
  *
+ * <p>This runtime uses the Java FFM API. Enable preview features and native access when running
+ * generated codecs.
+ *
  * <h2>Thread Safety Summary</h2>
  *
  * <table border="1" cellpadding="4">
@@ -11,42 +14,42 @@
  *   </tr>
  *   <tr>
  *     <td>{@link express.mvp.myra.codec.runtime.EncoderConfig}</td>
- *     <td>✅ Yes</td>
+ *     <td>Yes</td>
  *     <td>Immutable. Share freely.</td>
  *   </tr>
  *   <tr>
  *     <td>{@link express.mvp.myra.codec.runtime.MessageEncoder}</td>
- *     <td>❌ No</td>
+ *     <td>No</td>
  *     <td>Use one per thread (or ThreadLocal).</td>
  *   </tr>
  *   <tr>
  *     <td>{@link express.mvp.roray.ffm.utils.memory.PooledSegment}</td>
- *     <td>❌ No</td>
+ *     <td>No</td>
  *     <td>Single-owner until closed.</td>
  *   </tr>
  *   <tr>
  *     <td>{@link express.mvp.myra.codec.runtime.struct.MessageHeader}</td>
- *     <td>❌ No</td>
+ *     <td>No</td>
  *     <td>Flyweight pattern, reuse via wrap().</td>
  *   </tr>
  *   <tr>
  *     <td>{@link express.mvp.myra.codec.runtime.struct.RepeatingGroupIterator}</td>
- *     <td>❌ No</td>
+ *     <td>No</td>
  *     <td>Flyweight pattern, reuse via wrap().</td>
  *   </tr>
  *   <tr>
  *     <td>{@link express.mvp.myra.codec.runtime.struct.RepeatingGroupBuilder}</td>
- *     <td>❌ No</td>
+ *     <td>No</td>
  *     <td>Single-threaded builder pattern.</td>
  *   </tr>
  *   <tr>
  *     <td>{@link express.mvp.myra.codec.runtime.struct.VariableSizeRepeatingGroupIterator}</td>
- *     <td>❌ No</td>
+ *     <td>No</td>
  *     <td>Flyweight pattern, reuse via wrap().</td>
  *   </tr>
  *   <tr>
  *     <td>{@link express.mvp.myra.codec.runtime.struct.VariableSizeRepeatingGroupBuilder}</td>
- *     <td>❌ No</td>
+ *     <td>No</td>
  *     <td>Single-threaded builder pattern.</td>
  *   </tr>
  * </table>

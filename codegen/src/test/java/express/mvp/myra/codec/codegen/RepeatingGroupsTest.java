@@ -3,8 +3,9 @@ package express.mvp.myra.codec.codegen;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.palantir.javapoet.JavaFile;
-import express.mvp.myra.codec.codegen.resolver.*;
 import express.mvp.myra.codec.schema.EnumValueDefinition;
+import express.mvp.myra.codec.schema.SchemaParser;
+import express.mvp.myra.codec.schema.resolver.*;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

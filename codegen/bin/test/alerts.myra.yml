@@ -1,0 +1,28 @@
+namespace: "com.example.alerts"
+version: "1.0.0"
+
+enums:
+  - name: "Level"
+    type: "int8"
+    values:
+      - name: "INFO"
+        id: 0
+      - name: "WARN"
+        id: 1
+      - name: "CRITICAL"
+        id: 2
+
+messages:
+  - name: "AlertBatch"
+    fields:
+      - tag: 1
+        name: "source"
+        type: "string"
+      - tag: 2
+        name: "levels"
+        type: "Level"
+        repeated: true
+      - tag: 3
+        name: "codes"
+        type: "int32"
+        repeated: true

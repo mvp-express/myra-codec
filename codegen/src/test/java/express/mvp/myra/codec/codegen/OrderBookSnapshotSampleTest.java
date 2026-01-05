@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
+/** Validates the order book snapshot fixture against schema assumptions. */
 class OrderBookSnapshotSampleTest {
 
     private final ObjectMapper mapper = new ObjectMapper();

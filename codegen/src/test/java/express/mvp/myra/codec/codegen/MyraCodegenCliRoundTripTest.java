@@ -2,9 +2,10 @@ package express.mvp.myra.codec.codegen;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import express.mvp.myra.codec.codegen.resolver.LockFile;
 import express.mvp.myra.codec.runtime.MessageEncoder;
 import express.mvp.myra.codec.runtime.struct.MessageHeader;
+import express.mvp.myra.codec.schema.LockFileManager;
+import express.mvp.myra.codec.schema.resolver.LockFile;
 import express.mvp.roray.ffm.utils.memory.MemorySegmentPool;
 import express.mvp.roray.ffm.utils.memory.PooledSegment;
 import express.mvp.roray.ffm.utils.memory.Utf8View;
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import picocli.CommandLine;
 
+/** End-to-end CLI tests for generating and executing codecs. */
 class MyraCodegenCliRoundTripTest {
 
     @Test

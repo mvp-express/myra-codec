@@ -601,7 +601,7 @@ ProcessBuilder pb = new ProcessBuilder(
    - **Winner:** Myra (easier for beginners)
 
 3. **✅ Modern Design**
-   - Myra: Built for Java 24+, FFM API, no legacy baggage
+   - Myra: Built for Java 25+, FFM API, no legacy baggage
    - Protobuf: Cross-language, carries compatibility overhead
    - **Winner:** Myra (optimized for modern Java)
 

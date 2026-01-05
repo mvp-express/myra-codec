@@ -5,12 +5,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import express.mvp.myra.codec.schema.FieldDefinition;
 import express.mvp.myra.codec.schema.MessageDefinition;
 import express.mvp.myra.codec.schema.SchemaDefinition;
+import express.mvp.myra.codec.schema.SchemaParser;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
+/** Tests schema parsing behavior used by codegen. */
 class SchemaParserTest {
 
     @Test

@@ -1,12 +1,12 @@
 package express.mvp.myra.codec.codegen;
 
 import com.palantir.javapoet.*;
-import express.mvp.myra.codec.codegen.resolver.ResolvedEnumDefinition;
-import express.mvp.myra.codec.codegen.resolver.ResolvedFieldDefinition;
-import express.mvp.myra.codec.codegen.resolver.ResolvedMessageDefinition;
-import express.mvp.myra.codec.codegen.resolver.ResolvedSchemaDefinition;
 import express.mvp.myra.codec.schema.EnumValueDefinition;
 import express.mvp.myra.codec.schema.SchemaVersion;
+import express.mvp.myra.codec.schema.resolver.ResolvedEnumDefinition;
+import express.mvp.myra.codec.schema.resolver.ResolvedFieldDefinition;
+import express.mvp.myra.codec.schema.resolver.ResolvedMessageDefinition;
+import express.mvp.myra.codec.schema.resolver.ResolvedSchemaDefinition;
 import express.mvp.roray.ffm.utils.memory.*;
 import express.mvp.roray.ffm.utils.memory.BitSetView;
 import express.mvp.roray.ffm.utils.memory.Layouts;
@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -38,8 +39,13 @@ public final class StubGenerator {
                     "express.mvp.myra.codec.runtime.struct", "VariableSizeRepeatingGroupIterator");
 
     private final ResolvedSchemaDefinition schema;
-    private final String flyweightSuffix = "Flyweight";
+    private static final String FLYWEIGHT_SUFFIX = "Flyweight";
 
+    /**
+     * Creates a generator for a resolved schema.
+     *
+     * @param schema the resolved schema definition
+     */
     public StubGenerator(ResolvedSchemaDefinition schema) {
         this.schema = Objects.requireNonNull(schema);
     }
@@ -92,7 +98,7 @@ public final class StubGenerator {
      * and zero-copy data accessor.
      */
     private JavaFile generateMessageFlyweight(ResolvedMessageDefinition message) {
-        String flyweightName = message.name() + flyweightSuffix;
+        String flyweightName = message.name() + FLYWEIGHT_SUFFIX;
         ClassName flyweightClassName = ClassName.get(schema.namespace(), flyweightName);
 
         // --- 1. Two-Pass Field Layout and FieldSpec Creation ---
@@ -190,7 +196,7 @@ public final class StubGenerator {
                     // Also add a flyweight view for nested messages
                     if (isMessageType(field)) {
                         ClassName childFlyweight =
-                                ClassName.get(schema.namespace(), field.type() + flyweightSuffix);
+                                ClassName.get(schema.namespace(), field.type() + FLYWEIGHT_SUFFIX);
                         viewFields.add(
                                 FieldSpec.builder(
                                                 childFlyweight,
@@ -203,7 +209,7 @@ public final class StubGenerator {
                 }
             } else if (isMessageType(field)) {
                 ClassName childFlyweight =
-                        ClassName.get(schema.namespace(), field.type() + flyweightSuffix);
+                        ClassName.get(schema.namespace(), field.type() + FLYWEIGHT_SUFFIX);
                 viewFields.add(
                         FieldSpec.builder(
                                         childFlyweight,
@@ -271,7 +277,7 @@ public final class StubGenerator {
 
         // Generate getters and setters for FIXED-SIZE fields.
         for (ResolvedFieldDefinition field : fixedFields) {
-            String offsetConstantName = field.name().toUpperCase() + "_OFFSET";
+            String offsetConstantName = field.name().toUpperCase(Locale.ROOT) + "_OFFSET";
             if (isFixedInlineUtf8(field)) {
                 methods.add(createInlineUtf8Getter(field, offsetConstantName));
             } else {
@@ -293,13 +299,13 @@ public final class StubGenerator {
 
         // Generate GETTERS ONLY for VARIABLE-LENGTH fields.
         for (ResolvedFieldDefinition field : varFields) {
-            String offsetConstantName = field.name().toUpperCase() + "_OFFSET";
+            String offsetConstantName = field.name().toUpperCase(Locale.ROOT) + "_OFFSET";
             if (field.repeated()) {
                 // Generate repeating group accessors
                 methods.addAll(createRepeatingGroupGetters(field, offsetConstantName));
             } else if (isMessageType(field)) {
                 ClassName childFlyweight =
-                        ClassName.get(schema.namespace(), field.type() + flyweightSuffix);
+                        ClassName.get(schema.namespace(), field.type() + FLYWEIGHT_SUFFIX);
                 methods.add(createMessageFieldGetter(field, childFlyweight, offsetConstantName));
             } else {
                 methods.add(
@@ -329,8 +335,31 @@ public final class StubGenerator {
             String viewVar = fieldName + "ViewTmp";
             String bytesVar = fieldName + "BytesTmp";
 
+            if (field.repeated()) {
+                String offsetConst = field.name().toUpperCase(Locale.ROOT) + "_OFFSET";
+                String relativeOffsetVar = fieldName + "RelativeOffset";
+                String dataLengthVar = fieldName + "DataLength";
+                writeToMethodBuilder
+                        .addStatement(
+                                "final int $L = this.segment.get($T.INT_BE, this.offset + $L)",
+                                relativeOffsetVar,
+                                Layouts.class,
+                                offsetConst)
+                        .addStatement(
+                                "final int $L = this.segment.get($T.INT_BE, this.offset + $L + 4)",
+                                dataLengthVar,
+                                Layouts.class,
+                                offsetConst)
+                        .addStatement("writer.writeVarInt($L)", dataLengthVar)
+                        .addStatement(
+                                "writer.writeSegmentRaw(this.segment, this.offset + $L, $L)",
+                                relativeOffsetVar,
+                                dataLengthVar);
+                continue;
+            }
+
             if (isMessageType(field)) {
-                String offsetConst = field.name().toUpperCase() + "_OFFSET";
+                String offsetConst = field.name().toUpperCase(Locale.ROOT) + "_OFFSET";
                 String relativeOffsetVar = fieldName + "RelativeOffset";
                 String nestedLengthVar = fieldName + "NestedLength";
                 writeToMethodBuilder
@@ -422,7 +451,7 @@ public final class StubGenerator {
         String builderName = message.name() + "Builder";
         ClassName builderClassName = ClassName.get(schema.namespace(), builderName);
         ClassName flyweightClassName =
-                ClassName.get(schema.namespace(), message.name() + flyweightSuffix);
+                ClassName.get(schema.namespace(), message.name() + FLYWEIGHT_SUFFIX);
         ClassName encoderClass = ClassName.get("express.mvp.myra.codec.runtime", "MessageEncoder");
         ClassName pooledSegmentClass =
                 ClassName.get("express.mvp.roray.ffm.utils.memory", "PooledSegment");
@@ -1590,7 +1619,7 @@ public final class StubGenerator {
     private FieldSpec createOffsetConstant(String fieldName, int offset) {
         return FieldSpec.builder(
                         int.class,
-                        fieldName.toUpperCase() + "_OFFSET",
+                        fieldName.toUpperCase(Locale.ROOT) + "_OFFSET",
                         Modifier.PUBLIC,
                         Modifier.STATIC,
                         Modifier.FINAL)
@@ -1742,7 +1771,7 @@ public final class StubGenerator {
         } else if (isMessageType(field)) {
             // For nested messages: generate method that wraps flyweight at index
             ClassName childFlyweight =
-                    ClassName.get(schema.namespace(), field.type() + flyweightSuffix);
+                    ClassName.get(schema.namespace(), field.type() + FLYWEIGHT_SUFFIX);
             String viewFieldName = field.name() + "View";
 
             MethodSpec elementGetter =
@@ -1996,9 +2025,7 @@ public final class StubGenerator {
                             field.name(),
                             field.fixedCapacity())
                     .endControlFlow()
-                    .addStatement(
-                            "$T.encodeUtf8(value, scratchBuffer, encodedLength)",
-                            varFieldWriterClass)
+                    .addStatement("$T.encodeUtf8(value, scratchBuffer)", varFieldWriterClass)
                     .addStatement("long base = payloadBase + $T.$L", flyweightClass, offsetConst)
                     .addStatement("segment.set($T.INT_BE, base, encodedLength)", layoutsClass)
                     .addStatement(
@@ -2518,7 +2545,7 @@ public final class StubGenerator {
     }
 
     private String constantName(String fieldName, String suffix) {
-        return fieldName.toUpperCase() + "_" + suffix;
+        return fieldName.toUpperCase(Locale.ROOT) + "_" + suffix;
     }
 
     private boolean isStringType(ResolvedFieldDefinition field) {

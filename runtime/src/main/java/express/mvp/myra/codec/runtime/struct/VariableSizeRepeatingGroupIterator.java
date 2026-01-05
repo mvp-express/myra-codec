@@ -4,6 +4,7 @@ import static express.mvp.roray.ffm.utils.memory.Layouts.*;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import express.mvp.roray.ffm.utils.memory.FlyweightAccessor;
 import express.mvp.roray.ffm.utils.memory.Utf8View;
 import java.lang.foreign.MemorySegment;
@@ -61,7 +62,6 @@ public final class VariableSizeRepeatingGroupIterator {
     public static final int OFFSET_ENTRY_SIZE = 4;
 
     @Nullable private MemorySegment segment;
-    private long baseOffset;
     private long offsetTableStart;
     private long dataRegionStart;
     private int count;
@@ -80,7 +80,6 @@ public final class VariableSizeRepeatingGroupIterator {
      */
     public void wrap(@NonNull MemorySegment segment, long offset) {
         this.segment = Objects.requireNonNull(segment, "segment");
-        this.baseOffset = offset;
         this.count = segment.get(INT_BE, offset);
         this.offsetTableStart = offset + COUNT_SIZE;
         this.dataRegionStart = offsetTableStart + ((long) count * OFFSET_ENTRY_SIZE);
@@ -274,6 +273,9 @@ public final class VariableSizeRepeatingGroupIterator {
      *
      * @return the wrapped segment, or null if not wrapped
      */
+    @SuppressFBWarnings(
+            value = "EI_EXPOSE_REP",
+            justification = "MemorySegment ownership is managed by the caller.")
     public MemorySegment segment() {
         return segment;
     }
@@ -290,7 +292,6 @@ public final class VariableSizeRepeatingGroupIterator {
     /** Resets this iterator, releasing the reference to the segment. */
     public void reset() {
         this.segment = null;
-        this.baseOffset = 0;
         this.offsetTableStart = 0;
         this.dataRegionStart = 0;
         this.count = 0;

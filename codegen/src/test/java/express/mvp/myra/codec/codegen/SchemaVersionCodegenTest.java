@@ -3,10 +3,10 @@ package express.mvp.myra.codec.codegen;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.palantir.javapoet.JavaFile;
-import express.mvp.myra.codec.codegen.resolver.ResolvedFieldDefinition;
-import express.mvp.myra.codec.codegen.resolver.ResolvedMessageDefinition;
-import express.mvp.myra.codec.codegen.resolver.ResolvedSchemaDefinition;
 import express.mvp.myra.codec.schema.SchemaVersion;
+import express.mvp.myra.codec.schema.resolver.ResolvedFieldDefinition;
+import express.mvp.myra.codec.schema.resolver.ResolvedMessageDefinition;
+import express.mvp.myra.codec.schema.resolver.ResolvedSchemaDefinition;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

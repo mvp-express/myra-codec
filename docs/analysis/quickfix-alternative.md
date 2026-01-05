@@ -20,7 +20,7 @@
 - ✅ **100% FIX Protocol Compatible** (can connect to exchanges, brokers, vendors)
 - ✅ **10-100x Faster** than QuickFIX/J (zero-GC, io_uring, binary internally)
 - ✅ **Drop-in Replacement** (same XML dictionaries, same message types)
-- ✅ **Modern Java** (Java 24+, FFM API, Virtual Threads ready)
+- ✅ **Modern Java** (Java 25+, FFM API, Virtual Threads ready)
 
 **Target Use Cases:**
 - **ANY use case currently using QuickFIX/J**
@@ -360,7 +360,7 @@ public class FixCodec {
 │  • FfmReceiver (io_uring receive)        │
 │  • Zero-Copy Networking                  │
 │  • Direct Buffer Management              │
-│  • Modern FFM API (Java 24+)             │
+│  • Modern FFM API (Java 25+)             │
 └────────────────┬─────────────────────────┘
                  │
                  ▼
@@ -683,7 +683,7 @@ QuickFIX/J requires:
 
 | Feature | QuickFIX/J | MyraCodec + FFM |
 |---------|-----------|-----------------|
-| **Java Version** | Java 8+ | Java 24+ |
+| **Java Version** | Java 8+ | Java 25+ |
 | **FFM API** | ❌ No | ✅ Yes (core design) |
 | **Virtual Threads** | ⚠️ Compatible | ✅ Optimized for |
 | **Vector API** | ❌ No | ✅ Future support |

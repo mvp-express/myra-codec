@@ -2,6 +2,7 @@ package express.mvp.myra.codec.runtime.struct;
 
 import static express.mvp.roray.ffm.utils.memory.Layouts.*;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import express.mvp.roray.ffm.utils.memory.BinaryWriter;
 import express.mvp.roray.ffm.utils.memory.FlyweightAccessor;
 import java.lang.foreign.MemorySegment;
@@ -53,12 +54,18 @@ public final class MessageHeader implements FlyweightAccessor {
     private MemorySegment segment;
     private long offset;
 
+    @SuppressFBWarnings(
+            value = "EI_EXPOSE_REP2",
+            justification = "MemorySegment ownership is managed by the caller.")
     @Override
     public void wrap(MemorySegment segment, long offset) {
         this.segment = segment;
         this.offset = offset;
     }
 
+    @SuppressFBWarnings(
+            value = "EI_EXPOSE_REP",
+            justification = "MemorySegment ownership is managed by the caller.")
     @Override
     public MemorySegment segment() {
         return this.segment;

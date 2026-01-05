@@ -3,12 +3,14 @@ package express.mvp.myra.codec.codegen;
 import static org.junit.jupiter.api.Assertions.*;
 
 import express.mvp.myra.codec.schema.SchemaDefinition;
+import express.mvp.myra.codec.schema.SchemaParser;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+/** Tests schema parser error cases in the codegen module. */
 class SchemaParserEdgeCasesTest {
 
     @TempDir Path tempDir;
