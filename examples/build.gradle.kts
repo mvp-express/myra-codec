@@ -7,14 +7,14 @@ plugins {
 }
 
 group = "express.mvp.myra.codec"
-version = "0.2.0"
+version = "0.2.1"
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation("express.mvp:roray-ffm:0.2.0")
+    implementation("express.mvp:roray-ffm:0.2.1")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.18.2")
     implementation(project(":runtime"))
     compileOnly(libs.spotbugs.annotations)

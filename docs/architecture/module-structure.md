@@ -108,7 +108,7 @@ When using generated flyweights in your application:
 // build.gradle.kts
 dependencies {
     // Only need the lightweight runtime
-    implementation("express.mvp.myra.codec:runtime:0.2.0")
+    implementation("express.mvp.myra.codec:runtime:0.2.1")
 }
 ```
 
@@ -118,7 +118,7 @@ For code generation (typically a build-time dependency):
 // build.gradle.kts
 dependencies {
     // CLI for generating flyweights from schemas
-    implementation("express.mvp.myra.codec:codegen:0.2.0")
+    implementation("express.mvp.myra.codec:codegen:0.2.1")
 }
 ```
 
