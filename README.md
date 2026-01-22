@@ -11,7 +11,7 @@ For applications using generated flyweights:
 
 ```kotlin
 dependencies {
-    implementation("express.mvp.myra.codec:runtime:0.1.0")
+    implementation("express.mvp.myra.codec:runtime:0.2.0")
 }
 ```
 
@@ -19,7 +19,7 @@ For code generation tooling:
 
 ```kotlin
 dependencies {
-    implementation("express.mvp.myra.codec:codegen:0.1.0")
+    implementation("express.mvp.myra.codec:codegen:0.2.0")
 }
 ```
 

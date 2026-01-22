@@ -10,12 +10,12 @@ MyraCodec is a schema-driven binary serialization library that generates zero-co
 
 ```kotlin
 plugins {
-    id("express.mvp.myra-codegen") version "0.1.0" // Optional: Gradle plugin
+    id("express.mvp.myra-codegen") version "0.2.0" // Optional: Gradle plugin
 }
 
 dependencies {
-    implementation("express.mvp.myra:myra-codec-runtime:0.1.0")
-    implementation("express.mvp.roray:roray-ffm:0.1.0")
+    implementation("express.mvp.myra:myra-codec-runtime:0.2.0")
+    implementation("express.mvp.roray:roray-ffm:0.2.0")
 }
 ```
 
@@ -25,12 +25,12 @@ dependencies {
 <dependency>
     <groupId>express.mvp.myra</groupId>
     <artifactId>myra-codec-runtime</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 <dependency>
     <groupId>express.mvp.roray</groupId>
     <artifactId>roray-ffm-utils</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 

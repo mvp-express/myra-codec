@@ -16,7 +16,7 @@ application {
 }
 
 group = "express.mvp.myra"
-version = "0.1.0"
+version = "0.2.0"
 
 repositories {
     // Use Maven Central for resolving dependencies.
@@ -79,7 +79,7 @@ tasks.withType<com.github.spotbugs.snom.SpotBugsTask>().configureEach {
 
 dependencies {
     implementation(project(":schema-core"))
-    implementation("express.mvp:roray-ffm:0.1.0")
+    implementation("express.mvp:roray-ffm:0.2.0")
     implementation("com.palantir.javapoet:javapoet:0.7.0")
     implementation("info.picocli:picocli:4.7.7")
 

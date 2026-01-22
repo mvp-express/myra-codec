@@ -12,7 +12,7 @@ plugins {
 }
 
 group = "express.mvp.myra.codec"
-version = "0.1.0"
+version = "0.2.0"
 
 repositories {
     mavenCentral()
@@ -23,7 +23,7 @@ val libs = extensions.getByType<VersionCatalogsExtension>().named("libs")
 dependencies {
     implementation(project(":codegen"))
     implementation(project(":runtime"))
-    implementation("express.mvp:roray-ffm:0.1.0")
+    implementation("express.mvp:roray-ffm:0.2.0")
     implementation(libs.findLibrary("kryo").get())
     implementation(libs.findLibrary("avro").get())
     implementation(libs.findLibrary("sbe").get())
@@ -33,7 +33,7 @@ dependencies {
     jmh(project(":runtime"))
     jmh("org.openjdk.jmh:jmh-core:1.37")
     jmhAnnotationProcessor("org.openjdk.jmh:jmh-generator-annprocess:1.37")
-    jmh("express.mvp:roray-ffm:0.1.0")
+    jmh("express.mvp:roray-ffm:0.2.0")
     jmh(libs.findLibrary("kryo").get())
     jmh(libs.findLibrary("avro").get())
     jmh(libs.findLibrary("sbe").get())

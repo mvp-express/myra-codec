@@ -16,7 +16,7 @@ import picocli.CommandLine.Option;
 @Command(
         name = "MyraCodec Code Gen",
         mixinStandardHelpOptions = true,
-        version = "0.1.0",
+        version = "0.2.0",
         description = "Generates Java source files from a .myra.yml schema.")
 public class MyraCodegenCli implements Callable<Integer> {
 
