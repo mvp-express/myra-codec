@@ -60,8 +60,8 @@ long id = flyweight.id();  // Zero-copy read
 ## Documentation
 
 📚 **[User Guide](https://mvp.express/docs/myra-codec/)** — Full documentation  
-🚀 **[Getting Started](https://mvp.express/docs/getting-started/)** — Ecosystem tutorial  
-📖 **[API Reference](https://mvp.express/docs/myra-codec/api/)** — Javadoc  
+🚀 **[Getting Started](https://mvp.express/docs/quick-start-guide/)** — Ecosystem tutorial  
+📖 **[API Reference](https://mvp.express/myra-codec/api/latest/)** — Javadoc  
 📋 **[Schema Specification](docs/specs/myra-schema-specification.md)** — `.myra.yml` format
 
 ## For Contributors
