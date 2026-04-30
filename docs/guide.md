@@ -90,28 +90,49 @@ messages:
 
 ### Supported Types
 
-| Type | Size | Description |
-|------|------|-------------|
-| `bool` | 1 byte | Boolean value |
-| `int8` | 1 byte | Signed 8-bit integer |
-| `int16` | 2 bytes | Signed 16-bit integer (big-endian) |
-| `int32` | 4 bytes | Signed 32-bit integer (big-endian) |
-| `int64` | 8 bytes | Signed 64-bit integer (big-endian) |
-| `float32` | 4 bytes | 32-bit IEEE 754 float (big-endian) |
-| `float64` | 8 bytes | 64-bit IEEE 754 double (big-endian) |
-| `string` | Variable | UTF-8 encoded string |
-| `bytes` | Variable | Raw byte array |
-| `<EnumName>` | Varies | Reference to defined enum |
-| `<MessageName>` | Variable | Nested message reference |
+<div class="table-container">
+<table class="table is-fullwidth is-striped is-hoverable">
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Size</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><code>bool</code></td><td>1 byte</td><td>Boolean value</td></tr>
+    <tr><td><code>int8</code></td><td>1 byte</td><td>Signed 8-bit integer</td></tr>
+    <tr><td><code>int16</code></td><td>2 bytes</td><td>Signed 16-bit integer (big-endian)</td></tr>
+    <tr><td><code>int32</code></td><td>4 bytes</td><td>Signed 32-bit integer (big-endian)</td></tr>
+    <tr><td><code>int64</code></td><td>8 bytes</td><td>Signed 64-bit integer (big-endian)</td></tr>
+    <tr><td><code>float32</code></td><td>4 bytes</td><td>32-bit IEEE 754 float (big-endian)</td></tr>
+    <tr><td><code>float64</code></td><td>8 bytes</td><td>64-bit IEEE 754 double (big-endian)</td></tr>
+    <tr><td><code>string</code></td><td>Variable</td><td>UTF-8 encoded string</td></tr>
+    <tr><td><code>bytes</code></td><td>Variable</td><td>Raw byte array</td></tr>
+    <tr><td><code>&lt;EnumName&gt;</code></td><td>Varies</td><td>Reference to defined enum</td></tr>
+    <tr><td><code>&lt;MessageName&gt;</code></td><td>Variable</td><td>Nested message reference</td></tr>
+  </tbody>
+</table>
+</div>
 
 ### Field Modifiers
 
-| Modifier | Description |
-|----------|-------------|
-| `optional: true` | Field may be absent (tracked via presence bits) |
-| `repeated: true` | Field is an array (not yet fully implemented) |
-| `fixed_capacity: N` | Fixed-size string/bytes field (inline, no var-length header) |
-| `deprecated: true` | Mark field as deprecated |
+<div class="table-container">
+<table class="table is-fullwidth is-striped is-hoverable">
+  <thead>
+    <tr>
+      <th>Modifier</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><code>optional: true</code></td><td>Field may be absent (tracked via presence bits)</td></tr>
+    <tr><td><code>repeated: true</code></td><td>Field is an array (not yet fully implemented)</td></tr>
+    <tr><td><code>fixed_capacity: N</code></td><td>Fixed-size string/bytes field (inline, no var-length header)</td></tr>
+    <tr><td><code>deprecated: true</code></td><td>Mark field as deprecated</td></tr>
+  </tbody>
+</table>
+</div>
 
 ### Fixed-Capacity Strings
 
@@ -306,33 +327,53 @@ builder.setOrderId(123L)
 
 ### Message Layout
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         Message Header                          │
-│  ┌──────────────┬──────────────┬──────────────┬───────────────┐ │
-│  │ Frame Length │ Template ID  │ Schema Ver   │  Reserved     │ │
-│  │   (4 bytes)  │  (2 bytes)   │  (2 bytes)   │  (8 bytes)    │ │
-│  └──────────────┴──────────────┴──────────────┴───────────────┘ │
-├─────────────────────────────────────────────────────────────────┤
-│                       Presence Bits                              │
-│         (N bytes, where N = ceil(optional_fields / 8))          │
-├─────────────────────────────────────────────────────────────────┤
-│                       Fixed Fields Block                         │
-│  ┌──────────────┬──────────────┬──────────────┬───────────────┐ │
-│  │   Field 1    │   Field 2    │   Field 3    │     ...       │ │
-│  └──────────────┴──────────────┴──────────────┴───────────────┘ │
-├─────────────────────────────────────────────────────────────────┤
-│                   Variable Fields Headers                        │
-│  ┌──────────────────────┬──────────────────────┐                │
-│  │  Offset (4 bytes)    │  Length (4 bytes)    │  × N fields   │
-│  └──────────────────────┴──────────────────────┘                │
-├─────────────────────────────────────────────────────────────────┤
-│                   Variable Fields Data                           │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │  Field N data ... Field N+1 data ... Field N+2 data ...  │   │
-│  └──────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-```
+<div class="io-diagram">
+  <svg viewBox="0 0 900 560" role="img" aria-label="Message layout diagram" style="width: 100%; height: auto;">
+    <rect x="10" y="10" width="880" height="540" rx="14" ry="14" fill="none" stroke="#e5e7eb" stroke-width="2" />
+
+    <text x="450" y="45" text-anchor="middle" fill="#e5e7eb" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="16">Message Header</text>
+    <rect x="60" y="60" width="780" height="70" fill="none" stroke="#e5e7eb" stroke-width="2" />
+    <line x1="255" y1="60" x2="255" y2="130" stroke="#e5e7eb" stroke-width="2" />
+    <line x1="450" y1="60" x2="450" y2="130" stroke="#e5e7eb" stroke-width="2" />
+    <line x1="645" y1="60" x2="645" y2="130" stroke="#e5e7eb" stroke-width="2" />
+    <text x="157" y="90" text-anchor="middle" fill="#e5e7eb" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="13">Frame Length</text>
+    <text x="157" y="110" text-anchor="middle" fill="#e5e7eb" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="12">(4 bytes)</text>
+    <text x="352" y="90" text-anchor="middle" fill="#e5e7eb" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="13">Template ID</text>
+    <text x="352" y="110" text-anchor="middle" fill="#e5e7eb" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="12">(2 bytes)</text>
+    <text x="547" y="90" text-anchor="middle" fill="#e5e7eb" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="13">Schema Ver</text>
+    <text x="547" y="110" text-anchor="middle" fill="#e5e7eb" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="12">(2 bytes)</text>
+    <text x="742" y="90" text-anchor="middle" fill="#e5e7eb" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="13">Reserved</text>
+    <text x="742" y="110" text-anchor="middle" fill="#e5e7eb" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="12">(8 bytes)</text>
+
+    <line x1="10" y1="150" x2="890" y2="150" stroke="#e5e7eb" stroke-width="2" />
+    <text x="450" y="185" text-anchor="middle" fill="#e5e7eb" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="15">Presence Bits</text>
+    <text x="450" y="205" text-anchor="middle" fill="#cbd5e1" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="12">(N bytes, where N = ceil(optional_fields / 8))</text>
+    <line x1="10" y1="225" x2="890" y2="225" stroke="#e5e7eb" stroke-width="2" />
+
+    <text x="450" y="255" text-anchor="middle" fill="#e5e7eb" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="15">Fixed Fields Block</text>
+    <rect x="60" y="270" width="780" height="70" fill="none" stroke="#e5e7eb" stroke-width="2" />
+    <line x1="255" y1="270" x2="255" y2="340" stroke="#e5e7eb" stroke-width="2" />
+    <line x1="450" y1="270" x2="450" y2="340" stroke="#e5e7eb" stroke-width="2" />
+    <line x1="645" y1="270" x2="645" y2="340" stroke="#e5e7eb" stroke-width="2" />
+    <text x="157" y="310" text-anchor="middle" fill="#e5e7eb" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="13">Field 1</text>
+    <text x="352" y="310" text-anchor="middle" fill="#e5e7eb" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="13">Field 2</text>
+    <text x="547" y="310" text-anchor="middle" fill="#e5e7eb" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="13">Field 3</text>
+    <text x="742" y="310" text-anchor="middle" fill="#e5e7eb" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="13">…</text>
+
+    <line x1="10" y1="360" x2="890" y2="360" stroke="#e5e7eb" stroke-width="2" />
+    <text x="450" y="390" text-anchor="middle" fill="#e5e7eb" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="15">Variable Fields Headers</text>
+    <rect x="60" y="405" width="520" height="55" fill="none" stroke="#e5e7eb" stroke-width="2" />
+    <line x1="320" y1="405" x2="320" y2="460" stroke="#e5e7eb" stroke-width="2" />
+    <text x="190" y="435" text-anchor="middle" fill="#e5e7eb" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="12">Offset (4 bytes)</text>
+    <text x="450" y="435" text-anchor="middle" fill="#e5e7eb" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="12">Length (4 bytes)</text>
+    <text x="675" y="438" text-anchor="middle" fill="#e5e7eb" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="12">× N fields</text>
+
+    <line x1="10" y1="475" x2="890" y2="475" stroke="#e5e7eb" stroke-width="2" />
+    <text x="450" y="500" text-anchor="middle" fill="#e5e7eb" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="15">Variable Fields Data</text>
+    <rect x="60" y="515" width="780" height="30" fill="none" stroke="#e5e7eb" stroke-width="2" />
+    <text x="450" y="535" text-anchor="middle" fill="#e5e7eb" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="12">Field N data ... Field N+1 data ... Field N+2 data ...</text>
+  </svg>
+</div>
 
 ### Endianness
 
@@ -343,13 +384,19 @@ All multi-byte integers use **big-endian** (network byte order) for:
 
 ### Fixed-Capacity String Layout
 
-```
-┌────────────────┬────────────────────────────────┐
-│ Actual Length  │         UTF-8 Data             │
-│   (4 bytes)    │    (fixed_capacity bytes)      │
-│   big-endian   │   (padded with zeros)          │
-└────────────────┴────────────────────────────────┘
-```
+<div class="io-diagram">
+  <svg viewBox="0 0 700 160" role="img" aria-label="Fixed-capacity string layout diagram" style="width: 100%; height: auto;">
+    <rect x="10" y="10" width="680" height="140" rx="14" ry="14" fill="none" stroke="#e5e7eb" stroke-width="2" />
+    <rect x="60" y="45" width="580" height="70" fill="none" stroke="#e5e7eb" stroke-width="2" />
+    <line x1="220" y1="45" x2="220" y2="115" stroke="#e5e7eb" stroke-width="2" />
+    <text x="140" y="75" text-anchor="middle" fill="#e5e7eb" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="13">Actual Length</text>
+    <text x="140" y="95" text-anchor="middle" fill="#e5e7eb" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="12">(4 bytes)</text>
+    <text x="140" y="115" text-anchor="middle" fill="#cbd5e1" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="11">big-endian</text>
+    <text x="430" y="80" text-anchor="middle" fill="#e5e7eb" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="13">UTF-8 Data</text>
+    <text x="430" y="100" text-anchor="middle" fill="#cbd5e1" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="12">(fixed_capacity bytes)</text>
+    <text x="430" y="120" text-anchor="middle" fill="#cbd5e1" font-family="Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, monospace" font-size="11">(padded with zeros)</text>
+  </svg>
+</div>
 
 ---
 
@@ -523,13 +570,44 @@ If a field is almost always present, don't make it optional:
 
 ## Troubleshooting
 
-| Issue | Cause | Solution |
-|-------|-------|----------|
-| `IllegalStateException: Flyweight is not wrapped` | Accessing fields before `wrap()` | Call `flyweight.wrap(segment, offset)` first |
-| `IndexOutOfBoundsException` in getter | Segment too small | Check `segment.byteSize() >= BLOCK_LENGTH` |
-| `IllegalStateException: Field already written` | Double-setting field in builder | Each field can only be set once |
-| `IllegalStateException: Missing required field` | Not setting required field | Set all non-optional fields before `build()` |
-| Garbled strings | Wrong encoding | Ensure UTF-8 encoding; check `fixed_capacity` matches data |
+<div class="table-container">
+<table class="table is-fullwidth is-striped is-hoverable">
+  <thead>
+    <tr>
+      <th>Issue</th>
+      <th>Cause</th>
+      <th>Solution</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>IllegalStateException: Flyweight is not wrapped</code></td>
+      <td>Accessing fields before <code>wrap()</code></td>
+      <td>Call <code>flyweight.wrap(segment, offset)</code> first</td>
+    </tr>
+    <tr>
+      <td><code>IndexOutOfBoundsException</code> in getter</td>
+      <td>Segment too small</td>
+      <td>Check <code>segment.byteSize() &gt;= BLOCK_LENGTH</code></td>
+    </tr>
+    <tr>
+      <td><code>IllegalStateException: Field already written</code></td>
+      <td>Double-setting field in builder</td>
+      <td>Each field can only be set once</td>
+    </tr>
+    <tr>
+      <td><code>IllegalStateException: Missing required field</code></td>
+      <td>Not setting required field</td>
+      <td>Set all non-optional fields before <code>build()</code></td>
+    </tr>
+    <tr>
+      <td>Garbled strings</td>
+      <td>Wrong encoding</td>
+      <td>Ensure UTF-8 encoding; check <code>fixed_capacity</code> matches data</td>
+    </tr>
+  </tbody>
+</table>
+</div>
 
 ---
 
