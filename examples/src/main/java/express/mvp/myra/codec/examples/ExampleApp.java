@@ -155,7 +155,8 @@ public class ExampleApp {
 
     private static void encodeDecodeFromJsonResource(
             MessageEncoder encoder, MemorySegment scratch, String resourcePath, int maxSnapshots) {
-        try (InputStream stream = ExampleApp.class.getClassLoader().getResourceAsStream(resourcePath)) {
+        try (InputStream stream =
+                ExampleApp.class.getClassLoader().getResourceAsStream(resourcePath)) {
             if (stream == null) {
                 throw new IllegalArgumentException("Missing resource: " + resourcePath);
             }
@@ -208,8 +209,7 @@ public class ExampleApp {
             builder.setLastTrade(tradeWriter);
         }
         try (PooledSegment pooled =
-                builder
-                        .setBids(bidsWriter.count, bidsWriter)
+                builder.setBids(bidsWriter.count, bidsWriter)
                         .setAsks(asksWriter.count, asksWriter)
                         .setMetadata(metaWriter.count, metaWriter)
                         .build(
@@ -263,7 +263,8 @@ public class ExampleApp {
         return writer;
     }
 
-    private static MetadataEntryArrayWriter parseMetadata(JsonNode metadataNode, MemorySegment scratch) {
+    private static MetadataEntryArrayWriter parseMetadata(
+            JsonNode metadataNode, MemorySegment scratch) {
         MetadataEntryArrayWriter writer = new MetadataEntryArrayWriter();
         if (metadataNode == null || metadataNode.isMissingNode() || metadataNode.isNull()) {
             return writer;

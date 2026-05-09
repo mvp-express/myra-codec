@@ -1,7 +1,7 @@
 import org.gradle.api.artifacts.VersionCatalogsExtension
 
 plugins {
-    application
+    java
     alias(libs.plugins.spotless)
     alias(libs.plugins.spotbugs)
     checkstyle
@@ -10,10 +10,6 @@ plugins {
 }
 
 val libs = extensions.getByType<VersionCatalogsExtension>().named("libs")
-
-application {
-    mainClass.set("express.mvp.myra.codec.codegen.MyraCodegenCli")
-}
 
 group = "express.mvp.myra"
 version = "0.2.1"
@@ -104,13 +100,8 @@ java {
     }
 }
 
-application {
-    mainClass.set("express.mvp.myra.codec.codegen.MyraCodegenCli")
-}
-
-tasks.named("shadowDistZip") { enabled = false }
-tasks.named("shadowDistTar") { enabled = false }
-tasks.named("startShadowScripts") { enabled = false }
+tasks.matching { it.name in setOf("shadowDistZip", "shadowDistTar", "startShadowScripts") }
+    .configureEach { enabled = false }
 
 tasks.shadowJar {
     manifest {

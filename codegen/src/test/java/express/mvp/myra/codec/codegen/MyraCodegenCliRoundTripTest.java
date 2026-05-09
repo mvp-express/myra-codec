@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.tools.Diagnostic;
@@ -124,6 +125,91 @@ class MyraCodegenCliRoundTripTest {
                         expectedValue,
                         valueView.toString(),
                         "Value bytes should match original payload");
+            }
+        }
+    }
+
+    @Test
+    void cliGeneratesUuidFieldsAsFixedWidthValues(@TempDir Path tempDir) throws Exception {
+        Path schemaPath =
+                Path.of("src", "test", "resources", "uuid_probe.myra.yml").toAbsolutePath();
+        Path generatedSources = Files.createDirectories(tempDir.resolve("generated-src"));
+        Path lockFilePath = tempDir.resolve("uuid-probe.generated.lock");
+
+        int exitCode =
+                new CommandLine(new MyraCodegenCli())
+                        .execute(
+                                "-s", schemaPath.toString(),
+                                "-o", generatedSources.toString(),
+                                "-l", lockFilePath.toString());
+        assertEquals(0, exitCode, "Myra codegen CLI must support uuid fields");
+
+        LockFile lockFile = LockFileManager.load(lockFilePath);
+        Path compiledOutput = compileGeneratedSources(generatedSources);
+        short templateId = templateId(lockFile, "UuidProbe");
+        short schemaVersion = schemaVersion(lockFile);
+
+        UUID id = UUID.fromString("10000000-0000-0000-0000-000000000001");
+        UUID correlationId = UUID.fromString("20000000-0000-0000-0000-000000000002");
+        UUID relatedOne = UUID.fromString("30000000-0000-0000-0000-000000000003");
+        UUID relatedTwo = UUID.fromString("40000000-0000-0000-0000-000000000004");
+
+        MemorySegmentPool pool = new MemorySegmentPool(4096, 1, 8);
+        MessageEncoder encoder = new MessageEncoder(pool);
+
+        try (URLClassLoader loader =
+                new URLClassLoader(
+                        new URL[] {compiledOutput.toUri().toURL()}, getClass().getClassLoader())) {
+            Class<?> builderClass =
+                    Class.forName("com.example.uuid.codec.UuidProbeBuilder", true, loader);
+            Object builder =
+                    builderClass
+                            .getMethod("allocate", MessageEncoder.class, int.class)
+                            .invoke(null, encoder, 2048);
+
+            builderClass.getMethod("setId", UUID.class).invoke(builder, id);
+            builderClass
+                    .getMethod("setCorrelationId", long.class, long.class)
+                    .invoke(
+                            builder,
+                            correlationId.getMostSignificantBits(),
+                            correlationId.getLeastSignificantBits());
+            builderClass
+                    .getMethod("setRelatedIds", UUID[].class)
+                    .invoke(builder, (Object) new UUID[] {relatedOne, relatedTwo});
+
+            PooledSegment encoded =
+                    (PooledSegment)
+                            builderClass
+                                    .getMethod("build", short.class, short.class)
+                                    .invoke(builder, templateId, schemaVersion);
+
+            try (PooledSegment pooled = encoded) {
+                Class<?> flyweightClass =
+                        Class.forName("com.example.uuid.codec.UuidProbeFlyweight", true, loader);
+                Object flyweight = flyweightClass.getConstructor().newInstance();
+                flyweightClass
+                        .getMethod("wrap", MemorySegment.class, long.class)
+                        .invoke(flyweight, pooled.segment(), (long) MessageHeader.HEADER_SIZE);
+
+                assertEquals(id, flyweightClass.getMethod("getId").invoke(flyweight));
+                assertEquals(
+                        id.getMostSignificantBits(),
+                        flyweightClass.getMethod("getIdMostSignificantBits").invoke(flyweight));
+                assertEquals(
+                        correlationId,
+                        flyweightClass.getMethod("getCorrelationId").invoke(flyweight));
+                assertEquals(2, flyweightClass.getMethod("getRelatedIdsCount").invoke(flyweight));
+                assertEquals(
+                        relatedOne,
+                        flyweightClass
+                                .getMethod("getRelatedIdsAt", int.class)
+                                .invoke(flyweight, 0));
+                assertEquals(
+                        relatedTwo,
+                        flyweightClass
+                                .getMethod("getRelatedIdsAt", int.class)
+                                .invoke(flyweight, 1));
             }
         }
     }

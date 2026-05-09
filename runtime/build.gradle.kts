@@ -13,6 +13,10 @@ repositories {
     mavenCentral()
 }
 
+base {
+    archivesName.set("myra-codec-runtime")
+}
+
 dependencies {
     api(libs.roray.ffm.utils)
     compileOnly(libs.spotbugs.annotations)

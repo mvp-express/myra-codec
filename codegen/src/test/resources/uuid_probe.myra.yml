@@ -1,0 +1,17 @@
+namespace: "com.example.uuid.codec"
+version: "1.0.0"
+
+messages:
+  - name: "UuidProbe"
+    fields:
+      - tag: 1
+        name: "id"
+        type: "uuid"
+      - tag: 2
+        name: "correlationId"
+        type: "uuid"
+        optional: true
+      - tag: 3
+        name: "relatedIds"
+        type: "uuid"
+        repeated: true

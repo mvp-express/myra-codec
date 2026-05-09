@@ -6,6 +6,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.lang.foreign.MemorySegment;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * A builder for writing repeating groups of fixed-size primitive elements.
@@ -159,6 +160,35 @@ public final class RepeatingGroupBuilder {
      */
     public RepeatingGroupBuilder addLong(long value) {
         segment.set(LONG_BE, writeOffset, value);
+        writeOffset += elementSize;
+        count++;
+        return this;
+    }
+
+    /**
+     * Adds a UUID element as two big-endian int64 values.
+     *
+     * @param value the UUID value to add
+     * @return this builder for chaining
+     */
+    public RepeatingGroupBuilder addUuid(UUID value) {
+        Objects.requireNonNull(value, "value");
+        return addUuid(value.getMostSignificantBits(), value.getLeastSignificantBits());
+    }
+
+    /**
+     * Adds a UUID element as two big-endian int64 values.
+     *
+     * @param mostSignificantBits the UUID most-significant bits
+     * @param leastSignificantBits the UUID least-significant bits
+     * @return this builder for chaining
+     */
+    public RepeatingGroupBuilder addUuid(long mostSignificantBits, long leastSignificantBits) {
+        if (elementSize < 16) {
+            throw new IllegalStateException("UUID elements require elementSize >= 16");
+        }
+        segment.set(LONG_BE, writeOffset, mostSignificantBits);
+        segment.set(LONG_BE, writeOffset + Long.BYTES, leastSignificantBits);
         writeOffset += elementSize;
         count++;
         return this;

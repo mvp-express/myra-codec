@@ -7,6 +7,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.lang.foreign.MemorySegment;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * A zero-allocation iterator for repeating groups of fixed-size primitive elements.
@@ -175,6 +176,41 @@ public final class RepeatingGroupIterator {
     public long getLongAt(int index) {
         checkIndex(index);
         return segment.get(LONG_BE, dataOffset + (long) index * elementSize);
+    }
+
+    /**
+     * Gets a UUID element at the specified index.
+     *
+     * @param index the element index (0-based)
+     * @return the UUID value at the index
+     * @throws IndexOutOfBoundsException if index is out of range
+     */
+    public UUID getUuidAt(int index) {
+        return new UUID(getUuidMostSignificantBitsAt(index), getUuidLeastSignificantBitsAt(index));
+    }
+
+    /**
+     * Gets the most-significant bits of a UUID element.
+     *
+     * @param index the element index (0-based)
+     * @return the UUID most-significant bits
+     * @throws IndexOutOfBoundsException if index is out of range
+     */
+    public long getUuidMostSignificantBitsAt(int index) {
+        checkIndex(index);
+        return segment.get(LONG_BE, dataOffset + (long) index * elementSize);
+    }
+
+    /**
+     * Gets the least-significant bits of a UUID element.
+     *
+     * @param index the element index (0-based)
+     * @return the UUID least-significant bits
+     * @throws IndexOutOfBoundsException if index is out of range
+     */
+    public long getUuidLeastSignificantBitsAt(int index) {
+        checkIndex(index);
+        return segment.get(LONG_BE, dataOffset + (long) index * elementSize + Long.BYTES);
     }
 
     /**

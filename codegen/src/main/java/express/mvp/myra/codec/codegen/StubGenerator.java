@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.lang.model.element.Modifier;
@@ -280,6 +281,8 @@ public final class StubGenerator {
             String offsetConstantName = field.name().toUpperCase(Locale.ROOT) + "_OFFSET";
             if (isFixedInlineUtf8(field)) {
                 methods.add(createInlineUtf8Getter(field, offsetConstantName));
+            } else if (isUuidType(field.type())) {
+                methods.addAll(createUuidAccessors(field.name(), offsetConstantName));
             } else {
                 TypeName fieldType = getJavaTypeName(field.type());
                 methods.add(
@@ -378,6 +381,16 @@ public final class StubGenerator {
                                 "writer.writeSegmentRaw(this.segment, this.offset + $L, $L)",
                                 relativeOffsetVar,
                                 nestedLengthVar);
+                continue;
+            }
+
+            if (isUuidType(field.type())) {
+                writeToMethodBuilder.addStatement(
+                        "writer.writeLongBE(this.get$LMostSignificantBits())",
+                        capitalize(fieldName));
+                writeToMethodBuilder.addStatement(
+                        "writer.writeLongBE(this.get$LLeastSignificantBits())",
+                        capitalize(fieldName));
                 continue;
             }
 
@@ -880,6 +893,16 @@ public final class StubGenerator {
             if (isEnum(field.type()) && !field.repeated()) {
                 builder.addMethod(
                         createEnumBuilderSetterOverload(builderClassName, field, objectsClass));
+            }
+            if (isUuidType(field.type()) && !field.repeated()) {
+                builder.addMethod(
+                        createUuidBuilderBitsSetter(
+                                builderClassName,
+                                field,
+                                fieldIndexMap.get(field),
+                                optionalBits.get(field),
+                                layoutsClass,
+                                flyweightClassName));
             }
             if (isMessageType(field.type()) && !field.repeated()) {
                 builder.addMethod(
@@ -1653,6 +1676,69 @@ public final class StubGenerator {
                 .build();
     }
 
+    private List<MethodSpec> createUuidAccessors(String name, String offsetConst) {
+        String capitalizedName = capitalize(name);
+        List<MethodSpec> methods = new ArrayList<>();
+        // UUID fields stay fixed-width by encoding the RFC 4122 bits as two big-endian int64s.
+        methods.add(
+                MethodSpec.methodBuilder("get" + capitalizedName)
+                        .addModifiers(Modifier.PUBLIC)
+                        .returns(UUID.class)
+                        .addStatement(
+                                "return new $T(get$LMostSignificantBits(),"
+                                        + " get$LLeastSignificantBits())",
+                                UUID.class,
+                                capitalizedName,
+                                capitalizedName)
+                        .build());
+        methods.add(
+                MethodSpec.methodBuilder("get" + capitalizedName + "MostSignificantBits")
+                        .addModifiers(Modifier.PUBLIC)
+                        .returns(long.class)
+                        .addStatement(
+                                "return segment.get($T.LONG_BE, this.offset + $L)",
+                                Layouts.class,
+                                offsetConst)
+                        .build());
+        methods.add(
+                MethodSpec.methodBuilder("get" + capitalizedName + "LeastSignificantBits")
+                        .addModifiers(Modifier.PUBLIC)
+                        .returns(long.class)
+                        .addStatement(
+                                "return segment.get($T.LONG_BE, this.offset + $L + $T.BYTES)",
+                                Layouts.class,
+                                offsetConst,
+                                Long.class)
+                        .build());
+        methods.add(
+                MethodSpec.methodBuilder("set" + capitalizedName)
+                        .addModifiers(Modifier.PUBLIC)
+                        .addParameter(UUID.class, "value")
+                        .addStatement("$T.requireNonNull(value, \"value\")", Objects.class)
+                        .addStatement(
+                                "set$L(value.getMostSignificantBits(),"
+                                        + " value.getLeastSignificantBits())",
+                                capitalizedName)
+                        .build());
+        methods.add(
+                MethodSpec.methodBuilder("set" + capitalizedName)
+                        .addModifiers(Modifier.PUBLIC)
+                        .addParameter(long.class, "mostSignificantBits")
+                        .addParameter(long.class, "leastSignificantBits")
+                        .addStatement(
+                                "segment.set($T.LONG_BE, this.offset + $L, mostSignificantBits)",
+                                Layouts.class,
+                                offsetConst)
+                        .addStatement(
+                                "segment.set($T.LONG_BE, this.offset + $L + $T.BYTES,"
+                                        + " leastSignificantBits)",
+                                Layouts.class,
+                                offsetConst,
+                                Long.class)
+                        .build());
+        return methods;
+    }
+
     /**
      * Creates a zero-GC getter for a variable-length field (like a string). It reads the offset and
      * length from the main flyweight's block and wraps a reusable view object around the actual
@@ -2056,6 +2142,16 @@ public final class StubGenerator {
             return method.build();
         }
 
+        if (isUuidType(field.type())) {
+            method.addParameter(UUID.class, "value")
+                    .addStatement("$T.requireNonNull(value, \"value\")", objectsClass)
+                    .addStatement(
+                            "return set$L(value.getMostSignificantBits(),"
+                                    + " value.getLeastSignificantBits())",
+                            capitalize(field.name()));
+            return method.build();
+        }
+
         TypeName javaType = getJavaTypeName(field.type());
         method.addParameter(javaType, "value")
                 .addStatement("ensureWritable($L, $S)", indexConst, field.name())
@@ -2066,6 +2162,45 @@ public final class StubGenerator {
                         flyweightClass,
                         offsetConst)
                 .addStatement("markWritten($L)", indexConst);
+        if (optionalConst != null) {
+            method.addStatement("presenceBits.set($L)", optionalConst);
+        }
+        method.addStatement("return this");
+        return method.build();
+    }
+
+    private MethodSpec createUuidBuilderBitsSetter(
+            ClassName builderClassName,
+            ResolvedFieldDefinition field,
+            int fieldIndex,
+            Integer optionalBitIndex,
+            ClassName layoutsClass,
+            ClassName flyweightClass) {
+        String indexConst = constantName(field.name(), "INDEX");
+        String offsetConst = constantName(field.name(), "OFFSET");
+        String optionalConst =
+                optionalBitIndex == null ? null : constantName(field.name(), "OPT_BIT");
+        MethodSpec.Builder method =
+                MethodSpec.methodBuilder("set" + capitalize(field.name()))
+                        .addModifiers(Modifier.PUBLIC)
+                        .returns(builderClassName)
+                        .addParameter(long.class, "mostSignificantBits")
+                        .addParameter(long.class, "leastSignificantBits")
+                        .addStatement("ensureWritable($L, $S)", indexConst, field.name())
+                        .addStatement(
+                                "segment.set($T.LONG_BE, payloadBase + $T.$L,"
+                                        + " mostSignificantBits)",
+                                layoutsClass,
+                                flyweightClass,
+                                offsetConst)
+                        .addStatement(
+                                "segment.set($T.LONG_BE, payloadBase + $T.$L + $T.BYTES,"
+                                        + " leastSignificantBits)",
+                                layoutsClass,
+                                flyweightClass,
+                                offsetConst,
+                                Long.class)
+                        .addStatement("markWritten($L)", indexConst);
         if (optionalConst != null) {
             method.addStatement("presenceBits.set($L)", optionalConst);
         }
@@ -2443,6 +2578,7 @@ public final class StubGenerator {
             case "int16" -> "addShort";
             case "int32" -> "addInt";
             case "int64" -> "addLong";
+            case "uuid" -> "addUuid";
             case "float32" -> "addFloat";
             case "float64" -> "addDouble";
             default ->
@@ -2491,6 +2627,7 @@ public final class StubGenerator {
             case "float32" -> TypeName.FLOAT;
             case "float64" -> TypeName.DOUBLE;
             case "bool" -> TypeName.BOOLEAN;
+            case "uuid" -> ClassName.get(UUID.class);
             // For a custom enum type, the Java type is the enum class itself.
             default -> ClassName.get(schema.namespace(), schemaType);
         };
@@ -2519,6 +2656,7 @@ public final class StubGenerator {
             case "int16" -> 2;
             case "int32", "float32" -> 4;
             case "int64", "float64" -> 8;
+            case "uuid" -> 16;
             case "string" -> {
                 if (field.fixedCapacity() == null) {
                     throw new IllegalArgumentException(
@@ -2556,6 +2694,10 @@ public final class StubGenerator {
         return "bytes".equals(getUnderlyingType(field.type()));
     }
 
+    private boolean isUuidType(String schemaType) {
+        return "uuid".equals(getUnderlyingType(schemaType));
+    }
+
     private boolean isMessageType(ResolvedFieldDefinition field) {
         return isMessageType(field.type());
     }
@@ -2587,7 +2729,7 @@ public final class StubGenerator {
         if (!field.repeated()) return false;
         String underlyingType = getUnderlyingType(field.type());
         return switch (underlyingType) {
-            case "bool", "int8", "int16", "int32", "int64", "float32", "float64" -> true;
+            case "bool", "int8", "int16", "int32", "int64", "float32", "float64", "uuid" -> true;
             default -> isEnum(field.type());
         };
     }
@@ -2600,6 +2742,7 @@ public final class StubGenerator {
             case "int16" -> 2;
             case "int32", "float32" -> 4;
             case "int64", "float64" -> 8;
+            case "uuid" -> 16;
             default ->
                     throw new IllegalArgumentException(
                             "Cannot get element size for type: " + field.type());
@@ -2615,6 +2758,7 @@ public final class StubGenerator {
             case "int16" -> TypeName.SHORT;
             case "int32" -> TypeName.INT;
             case "int64" -> TypeName.LONG;
+            case "uuid" -> ClassName.get(UUID.class);
             case "float32" -> TypeName.FLOAT;
             case "float64" -> TypeName.DOUBLE;
             default -> {
@@ -2635,6 +2779,7 @@ public final class StubGenerator {
             case "int16" -> "getShortAt";
             case "int32" -> "getIntAt";
             case "int64" -> "getLongAt";
+            case "uuid" -> "getUuidAt";
             case "float32" -> "getFloatAt";
             case "float64" -> "getDoubleAt";
             default ->
